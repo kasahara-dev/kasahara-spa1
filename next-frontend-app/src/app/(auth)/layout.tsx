@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "./globals.css";
-import Providers from "./providers";
-import Header from "@/components/Header";
+import "@/app/globals.css";
+import Providers from "@/app/providers";
+import NonMenuHeader from "@/components/NonMenuHeader";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ECサイト",
+  title: process.env.NEXT_PUBLIC_APP_NAME || "幼稚園連絡アプリ",
   description: "Laravel + Next.js ECサイト",
 };
 
@@ -20,7 +20,7 @@ export default function RootLayout({
     <html lang="ja">
       <body className={inter.className}>
         <Providers>
-          <Header />
+          <NonMenuHeader />
           <main>{children}</main>
         </Providers>
       </body>

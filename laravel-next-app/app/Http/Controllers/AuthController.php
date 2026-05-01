@@ -12,16 +12,18 @@ class AuthController extends Controller
 {
     public function login(Request $request)
     {
+        \Log::info('Login attempt:', $request->all());
         $request->validate([
-            'email' => 'required|email',
+            'login_id' => 'required',
             'password' => 'required',
+            'role' => 'required|in:staff,parent'
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('account_id', $request->login_id)->where('role', $request->role)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['認証情報が正しくありません。'],
+                'login_id' => ['認証情報が正しくありません。'],
             ]);
         }
 
@@ -38,27 +40,5 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'ログアウトしました']);
-    }
-
-    public function register(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:8|confirmed',
-        ]);
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        $token = $user->createToken('auth-token')->plainTextToken;
-
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-        ]);
     }
 }

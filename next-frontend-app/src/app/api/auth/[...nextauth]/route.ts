@@ -6,11 +6,12 @@ const handler = NextAuth({
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
+        loginId: { label: "ログインID", type: "text" },
         password: { label: "Password", type: "password" },
+        role:{label:"Role",type:"text"},
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.loginId || !credentials?.password) {
           return null;
         }
 
@@ -24,8 +25,9 @@ const handler = NextAuth({
                 Accept: "application/json",
               },
               body: JSON.stringify({
-                email: credentials.email,
+                login_id: credentials.loginId,
                 password: credentials.password,
+                role:credentials.role,
               }),
             },
           );
@@ -39,7 +41,8 @@ const handler = NextAuth({
           return {
             id: data.user.id,
             name: data.user.name,
-            email: data.user.email,
+            loginId: data.user.login_id,
+            role:data.user.role,
             accessToken: data.token,
           };
         } catch (error) {
@@ -54,12 +57,14 @@ const handler = NextAuth({
       if (user) {
         token.accessToken = user.accessToken;
         token.id = user.id;
+        token.role = user.role;
       }
       return token;
     },
     async session({ session, token }) {
       session.accessToken = token.accessToken;
       session.user.id = token.id;
+      session.role = token.role;
       return session;
     },
   },
