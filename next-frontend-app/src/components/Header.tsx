@@ -6,10 +6,19 @@ import Link from "next/link";
 export default function Header() {
   const { data: session, status } = useSession();
 
+  const handleSignOut = () => {
+    // 職員ロールなら /staff/login、それ以外（保護者など）なら / へ
+    const redirectUrl = session?.role === "staff" ? "/staff/login" : "/login";
+    signOut({ callbackUrl: redirectUrl });
+  };
+
   return (
     <header className="bg-white shadow">
       <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-        <Link href="/" className="text-xl font-bold text-gray-800">
+        <Link
+          href={session?.role === "staff" ? "/staff" : "/"}
+          className="text-xl font-bold text-gray-800"
+        >
           ECサイト
         </Link>
 
@@ -24,7 +33,7 @@ export default function Header() {
             <div className="flex items-center gap-4">
               <span className="text-gray-600">{session.user?.name}さん</span>
               <button
-                onClick={() => signOut({ callbackUrl: "/" })}
+                onClick={handleSignOut}
                 className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition-colors"
               >
                 ログアウト
