@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import {Button} from "@/components/ui/button"
 
-export default function LoginPage() {
+export default function Home() {
   const router = useRouter();
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
@@ -38,7 +39,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <h1 className="text-2xl font-bold text-center mb-6">職員ログイン</h1>
 
@@ -85,13 +86,13 @@ export default function LoginPage() {
             />
           </div>
 
-          <button
+          <Button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors"
+            className="w-full text-white py-2 px-4 rounded-md disabled:cursor-not-allowed"
           >
             {isLoading ? "ログイン中..." : "ログイン"}
-          </button>
+          </Button>
         </form>
 
         <p className="mt-4 text-center text-sm text-gray-600">

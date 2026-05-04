@@ -21,7 +21,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja" className={cn("font-sans", geist.variable)}>
-      <body className={inter.className}>
+      <body className="bg-parent-soft min-h-screen">
         <Providers>
           <Header />
           <main>{children}</main>

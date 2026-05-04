@@ -55,7 +55,7 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #65c294;
+  --primary: #00a497;
   --primary-foreground: oklch(0.98 0.01 150);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -131,6 +131,11 @@
   [role="button"] {
     cursor: pointer;
   }
+  button:hover:not(:disabled),
+  [role="button"]:hover {
+    opacity: 0.8;
+    transform: translateY(-1px); 
+  }
 }
 
 @layer utilities {
@@ -138,10 +143,10 @@
     background-color: #fff1ab;
   }
   .bg-staff-soft {
-    background-color: oklch(0.96 0.02 220);
+    background-color:#65BBE9;
   }
 
   .bg-parent-soft {
-    background-color: oklch(0.97 0.03 85);
+    background-color: #FAFAD2;
   }
 }
