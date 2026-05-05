@@ -30,7 +30,7 @@ export default function Header() {
               <span className="text-gray-600 text-sm">
                 {session.user?.name}さん
               </span>
-              <Button onClick={handleSignOut} size="sm">
+              <Button className="px-3 py-6" onClick={handleSignOut} size="sm">
                 ログアウト
               </Button>
             </div>

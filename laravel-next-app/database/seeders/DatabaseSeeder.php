@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             BusSeeder::class,
             UserSeeder::class,
+            CalendarSeeder::class,
         ]);
     }
 }

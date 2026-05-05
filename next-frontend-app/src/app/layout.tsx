@@ -10,8 +10,8 @@ const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ECサイト",
-  description: "Laravel + Next.js ECサイト",
+  title: process.env.NEXT_PUBLIC_APP_NAME,
+  description: "幼稚園連絡アプリ",
 };
 
 export default function RootLayout({
