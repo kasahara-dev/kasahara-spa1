@@ -60,7 +60,7 @@ export default function LoginForm({ role }: LoginFormProps) {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form noValidate onSubmit={handleSubmit} className="space-y-5">
         <div>
           <label
             htmlFor="loginId"

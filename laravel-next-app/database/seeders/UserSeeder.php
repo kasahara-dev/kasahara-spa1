@@ -25,8 +25,6 @@ class UserSeeder extends Seeder
             'role' => 'parent',
             'name' => '園児1',
             'password' => Hash::make('password'),
-            'email1' => fake()->safeEmail(),
-            'tel1' => fake()->phoneNumber(),
         ]);
     }
 }

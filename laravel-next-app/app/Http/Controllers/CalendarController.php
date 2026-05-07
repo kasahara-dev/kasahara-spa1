@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\CalendarService;
+use App\Models\Calendar;
 
 class CalendarController extends Controller
 {
@@ -12,8 +13,17 @@ class CalendarController extends Controller
      */
     public function index(Request $request, CalendarService $service)
     {
-        $data = $service->getMonthlyData($request->query('month'), 'parent');
-        return response()->json($data);
+        $config = [
+            'start_date' => config('app_settings.start_date'),
+            'end_date'   => config('app_settings.end_date'),
+        ];
+        $calendarData = Calendar::with(['events', 'attendances'])
+            ->whereBetween('date', [$config['start_date'], $config['end_date']])
+            ->get();
+        return response()->json([
+            'config'        => $config,
+            'calendar_data' => $calendarData,
+        ]);
     }
     /**
      * Store a newly created resource in storage.

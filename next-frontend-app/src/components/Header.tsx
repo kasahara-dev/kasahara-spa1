@@ -23,40 +23,46 @@ export default function Header() {
 
   return (
     <header className="bg-header">
-      <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div className="max-w-7xl mx-auto px-4 py-2 flex justify-between items-center">
         <Link
           href={session?.role === "staff" ? "/staff" : "/"}
           className="text-xl font-bold text-primary"
         >
-          {status === "authenticated" && session?.role === "parent"
+          {status === "authenticated" &&
+          session?.role === "parent" &&
+          !pathname.startsWith("/staff")
             ? userNameWithTitle
             : appName}
         </Link>
-        {status === "authenticated" && session?.role === "staff" && (
-          <nav className="hidden md:flex items-center gap-1">
-            {staffNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "px-4 py-2 font-medium rounded-md transition-colors",
-                  pathname === item.href
-                    ? "text-primary hover:bg-muted underline"
-                    : "text-muted-foreground hover:bg-muted underline",
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-        )}
+        {status === "authenticated" &&
+          session?.role === "staff" &&
+          pathname.startsWith("/staff") && (
+            <nav className="hidden md:flex items-center gap-1">
+              {staffNavItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "px-4 py-2 font-medium rounded-md transition-colors",
+                    pathname === item.href
+                      ? "text-primary hover:text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          )}
         <nav className="flex items-center gap-4">
           {status === "loading" && (
             <span className="text-gray-400 text-sm">読み込み中...</span>
           )}
           {status === "authenticated" && session && (
             <div className="flex items-center gap-4">
-              {status === "authenticated" && session?.role === "staff"
+              {status === "authenticated" &&
+              session?.role === "staff" &&
+              pathname.startsWith("/staff")
                 ? userNameWithTitle
                 : null}
               <Button className="px-3 py-6" onClick={handleSignOut} size="sm">

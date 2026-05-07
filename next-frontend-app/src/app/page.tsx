@@ -1,7 +1,13 @@
+"use client";
+
+import { Calendar } from "@/components/ui/calendar";
+import { ja } from "date-fns/locale";
+
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <h1 className="text-4xl font-bold">保護者用トップ</h1>
+    <main className="mx-4 flex flex-col items-start justify-start">
+      <h2 className="underline">予定</h2>
+      <Calendar mode="single" className="w-full" locale={ja} />
     </main>
   );
 }

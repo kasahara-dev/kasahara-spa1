@@ -8,12 +8,12 @@ use App\Http\Controllers\CalendarController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::middleware('auth:sanctum')->group(function () {
+// Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::middleware('checkRole:staff')->prefix('staff')->group(function () {
-        Route::get('/staff/calendar', [CalendarController::class, 'index']);
-    });
-    Route::middleware('checkRole:parent')->group(function () {
-        Route::get('/calendar', [CalendarController::class, 'index']);
-    });
-});
+    // Route::middleware('checkRole:staff')->prefix('staff')->group(function () {
+        Route::get('/staff', [CalendarController::class, 'index']);
+    // });
+    // Route::middleware('checkRole:parent')->group(function () {
+        Route::get('/', [CalendarController::class, 'index']);
+//     });
+// });
