@@ -5,9 +5,11 @@ import { ja } from "date-fns/locale";
 
 export default function Home() {
   return (
-    <main className="mx-4 flex flex-col items-start justify-start">
-      <h2 className="underline">予定</h2>
-      <Calendar mode="single" className="w-full" locale={ja} />
-    </main>
+    <div className="px-4 flex flex-col items-center">
+      <div className="w-full md:w-1/2">
+        <h2 className="underline text-chic-gray">予定</h2>
+        <Calendar mode="single" className="w-full" locale={ja} />
+      </div>
+    </div>
   );
 }

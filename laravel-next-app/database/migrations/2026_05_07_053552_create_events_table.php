@@ -13,7 +13,12 @@ return new class extends Migration
     {
         Schema::create('events', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('calendar_id')->constrained();
+            $table->string('title');
+            $table->string('detail');
+            $table->foreignId('editor_id')->constrained('users');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

@@ -18,7 +18,6 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory()->create();
         $this->call([
-            BusSeeder::class,
             UserSeeder::class,
             CalendarSeeder::class,
         ]);

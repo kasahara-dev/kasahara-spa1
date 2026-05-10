@@ -13,8 +13,12 @@ return new class extends Migration
     {
         Schema::create('attendances', function (Blueprint $table) {
             $table->id();
-            $table->foreign('calender_id')->references('id')->on('calendar');
+            $table->foreignId('calendar_id')->constrained();
+            $table->foreignId('user_id')->constrained();
+            $table->tinyInteger('status')->comment('1:欠席、2:遅刻その他');
+            $table->string('detail')->nullable();
             $table->timestamps();
+            $table->unique(['calendar_id', 'user_id']);
         });
     }
 
