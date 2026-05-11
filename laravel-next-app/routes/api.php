@@ -15,5 +15,5 @@ Route::post('/login', [AuthController::class, 'login']);
     // });
     // Route::middleware('checkRole:parent')->group(function () {
         Route::get('/', [CalendarController::class, 'index']);
-//     });
+    // });
 // });

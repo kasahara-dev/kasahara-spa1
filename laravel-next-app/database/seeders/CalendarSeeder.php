@@ -20,10 +20,22 @@ class CalendarSeeder extends Seeder
         $end=Carbon::parse(config('app_settings.end_date'));
         $period = CarbonPeriod::create($start, $end);
         $data = [];
+        $closeDates = collect(config('app_settings.close_dates'));
+        $openDates = collect(config('app_settings.open_dates'));
         foreach ($period as $date) {
+            $working = 1;
+            $dateString = $date->toDateString();
+            if($date->isWeekend()){
+                $working = 0;
+            }elseif ($closeDates->contains($dateString)) {
+                $working = 0;
+            }
+            if($openDates->contains($dateString)){
+                $working = 1;
+            }
             $data[] = [
                 'date'       => $date->format('Y-m-d'),
-                'working' => ($date->isWeekend()) ? 0 : 1,
+                'working' => $working,
                 'created_at' => now(),
                 'updated_at' => now(),
             ];

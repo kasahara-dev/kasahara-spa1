@@ -8,7 +8,7 @@
 ## 環境構築
 
 1.  `git clone git@github.com:kasahara-dev/kasahara-spa1.git`
-2.  `cd spa`
+2.  `cd kasahara-spa1`
 3.  `make init`
 
 > [!IMPORTANT]
@@ -62,8 +62,8 @@
 
 ## テストユーザー
 
-- 保護者1ID：`202401001` パスワード：`password`
-- 職員1ID：`S2021001` パスワード：`password`
+- 保護者ID：`202401001` パスワード：`password`
+- 職員ID：`S2021001` パスワード：`password`
 
 > [!IMPORTANT]
 > 作成中です
