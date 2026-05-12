@@ -24,7 +24,20 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $users = User::pluck('account_id')->toArray();
+        $accountId = $this->faker->unique()->randomNumber();
+        while(in_array($accountId,$users)){
+            $accountId = $this->faker->unique()->randomNumber();
+        }
+        $rand = rand(1, 100);
+        if($rand > 50){
+            $role = 'staff';
+        }else{
+            $role = 'parent';
+        }
         return [
+            'account_id'=> $accountId,
+            'role'=> $role,
             'name' => fake()->name(),
             'password' => static::$password ??= Hash::make('password'),
         ];

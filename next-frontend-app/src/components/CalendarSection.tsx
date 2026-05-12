@@ -3,16 +3,23 @@
 import * as React from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { ja } from "date-fns/locale";
-import { parseISO, isWithinInterval } from "date-fns"; // isWithinIntervalを追加
+import { parseISO, isWithinInterval, isSameDay } from "date-fns";
 
+interface CalendarEvent {
+  id: number;
+  title: string;
+  description?: string;
+}
 interface CalendarApiResponse {
   config: {
     start_date: string;
     end_date: string;
   };
+
   calendar_data: Array<{
     date: string;
     working: number;
+    events: CalendarEvent[];
   }>;
 }
 
@@ -59,6 +66,7 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
     return (
       <div className="text-chic-gray-sub p-4 text-center">読み込み中...</div>
     );
+
   const closedDays = data.calendar_data
     .filter((item) => item.working === 0)
     .map((item) => parseISO(item.date));
@@ -71,18 +79,26 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
       mode="single"
       selected={date}
       onSelect={setDate}
-      month={month} // 現在表示する月を指定
-      onMonthChange={setMonth} // 月を切り替えた時にステートを更新
+      month={month}
+      onMonthChange={setMonth}
       locale={ja}
       startMonth={minDate}
       endMonth={maxDate}
       disabled={[{ before: minDate, after: maxDate }, ...closedDays]}
-      className="w-full"
+      className="w-full [&_th:nth-child(1)]:text-red-400/80 [&_th:nth-child(7)]:text-blue-400/80"
+      // 1. 「イベントがある日」というグループ（modifier）を作る
       modifiers={{
         closed: closedDays,
+        hasEvent: data.calendar_data
+          .filter((d) => d.events && d.events.length > 0)
+          .map((d) => parseISO(d.date)),
       }}
+      // 2. そのグループに対して CSS クラスを割り当てる
       modifiersClassNames={{
-        closed: "text-red-500 font-bold", // 赤字＆太字にする
+        closed: "text-red-500 font-bold",
+        // hasEvent クラスが付いたボタンに、擬似要素（after）でドットを表示させる
+        hasEvent:
+          "relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-2 after:h-2 after:bg-primary after:rounded-full aria-selected:after:bg-primary-foreground",
       }}
     />
   );

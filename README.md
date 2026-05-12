@@ -50,15 +50,14 @@
 
 </details>
 
-
 ## ER 図
 
 ![ER図](ER.drawio.png)
 
 ## URL
 
-- 保護者ログインページ：http://localhost/login
-- 職員ログインページ：http://localhost/staff/login
+- 保護者ログインページ：http://localhost:3000/login
+- 職員ログインページ：http://localhost:3000/staff/login
 
 ## テストユーザー
 
