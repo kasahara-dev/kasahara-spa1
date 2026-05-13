@@ -18,6 +18,7 @@ return new class extends Migration
             $table->tinyInteger('status')->comment('1:欠席、2:遅刻その他');
             $table->string('detail')->nullable();
             $table->timestamps();
+            $table->softDeletes();
             $table->unique(['calendar_id', 'user_id']);
         });
     }

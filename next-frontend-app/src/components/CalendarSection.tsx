@@ -4,6 +4,7 @@ import * as React from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { ja } from "date-fns/locale";
 import { parseISO, isWithinInterval, isSameDay } from "date-fns";
+import { useSession } from "next-auth/react";
 
 interface CalendarEvent {
   id: number;
@@ -20,20 +21,42 @@ interface CalendarApiResponse {
     date: string;
     working: number;
     events: CalendarEvent[];
+    attendance?: {
+      id: number;
+      status: number;
+      user_id: number;
+      calendar_id: number;
+    } | null;
   }>;
 }
 
 export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
   const [data, setData] = React.useState<CalendarApiResponse | null>(null);
+  const { data: session } = useSession();
 
   // 初期値は undefined にしておき、データ取得後に判定する
   const [date, setDate] = React.useState<Date | undefined>(undefined);
   // カレンダーが「今何月を表示しているか」を管理するステート
   const [month, setMonth] = React.useState<Date>(new Date());
 
+  const token = session?.accessToken;
+
   React.useEffect(() => {
-    fetch(apiUrl)
-      .then((res) => res.json())
+    if (!token) return;
+    fetch(apiUrl, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        // JSONじゃないものが返ってきた時のためのガード
+        if (!res.ok) {
+          throw new Error(`エラーが発生しました: ${res.status}`);
+        }
+        return res.json();
+      })
       .then((json: CalendarApiResponse) => {
         setData(json);
 
@@ -60,7 +83,7 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
         }
       })
       .catch((err) => console.error("データ取得に失敗:", err));
-  }, [apiUrl]);
+  }, [apiUrl,token]);
 
   if (!data)
     return (
@@ -92,13 +115,24 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
         hasEvent: data.calendar_data
           .filter((d) => d.events && d.events.length > 0)
           .map((d) => parseISO(d.date)),
+        // 1. 欠席の日グループ
+        absent: data.calendar_data
+          .filter((d) => d.attendance?.status === 1)
+          .map((d) => parseISO(d.date)),
+        // 2. 遅刻・その他の日グループ
+        late: data.calendar_data
+          .filter((d) => d.attendance?.status === 2)
+          .map((d) => parseISO(d.date)),
       }}
       // 2. そのグループに対して CSS クラスを割り当てる
       modifiersClassNames={{
         closed: "text-red-500 font-bold",
-        // hasEvent クラスが付いたボタンに、擬似要素（after）でドットを表示させる
+        absent:
+          "relative before:content-['×'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-[28px] before:text-red-500 before:pointer-events-none before:font-bold",
+        late:
+          "relative before:content-['△'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-[28px] before:text-red-500 before:pointer-events-none before:font-bold",
         hasEvent:
-          "relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-2 after:h-2 after:bg-primary after:rounded-full aria-selected:after:bg-primary-foreground",
+          "relative after:content-[''] after:absolute after:bottom-1 md:after:bottom-3 after:left-1/2 after:-translate-x-1/2 after:w-2 after:h-2 after:bg-primary after:rounded-full aria-selected:after:bg-primary-foreground",
       }}
     />
   );

@@ -18,15 +18,18 @@ class CalendarController extends Controller
             'end_date'   => config('app_settings.end_date'),
         ];
         $userId = auth()->id();
+        // 下の行は開発用
+        $userId = 2;
 
         $calendarData = Calendar::with([
-        'events',
-        'attendances' => function ($query) use ($userId) {
-            $query->where('user_id', $userId);
+            'events',
+            'attendance' => function ($query) use ($userId) {
+                $query->where('user_id', $userId);
             }
         ])
             ->whereBetween('date', [$config['start_date'], $config['end_date']])
             ->get();
+
         return response()->json([
             'config'        => $config,
             'calendar_data' => $calendarData,
