@@ -33,4 +33,8 @@ class User extends Authenticatable
     public function attendances(){
         return $this->hasMany('App\Models\Attendance');
     }
+    public function groups(){
+        return $this->belongsToMany('App\Models\Group', 'group_user')
+            ->withTimestamps();
+    }
 }

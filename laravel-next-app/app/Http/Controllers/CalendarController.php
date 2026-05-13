@@ -19,7 +19,7 @@ class CalendarController extends Controller
         ];
         $userId = auth()->id();
         // 下の行は開発用
-        $userId = 2;
+        // $userId = 2;
 
         $calendarData = Calendar::with([
             'events',
