@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             CalendarSeeder::class,
             EventSeeder::class,
             AttendanceSeeder::class,
+            StaffMessageSeeder::class,
         ]);
     }
 }

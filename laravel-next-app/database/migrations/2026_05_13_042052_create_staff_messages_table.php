@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('to');
             $table->string('title');
             $table->string('detail');
-            $table->string('img_path')->nullable();
+            $table->string('file_path')->nullable();
             $table->timestamps();
         });
     }
