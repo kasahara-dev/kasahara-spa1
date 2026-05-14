@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Parent_message;
-use App\Models_Staff_message;
+use App\Models\Staff_message;
+use App\Models\User;
 
 class MessageController extends Controller
 {
@@ -14,11 +15,13 @@ class MessageController extends Controller
     public function index()
     {
         $userId = auth()->id();
-        // 受信メッセージ
-        
+        $userId = 2;
+
+        $messages = User::find($userId)->getMessages();
+
         // 送受信区分、タイトル、本文
         return response()->json([
-            'messages' => $messages,
+            $messages
         ]);
     }
 
