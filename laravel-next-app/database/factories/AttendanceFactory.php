@@ -26,11 +26,18 @@ class AttendanceFactory extends Factory
         }else{
             $detail = null;
         }
+        $rand = rand(1,100);
+        if($rand < 10){
+            $delete = now();
+        }else{
+            $delete = null;
+        }
         return [
             'calendar_id' => null,
             'user_id' => null,
             'status' => $randStatus,
             'detail' => $detail,
+            'deleted_at' => $delete,
         ];
     }
 }

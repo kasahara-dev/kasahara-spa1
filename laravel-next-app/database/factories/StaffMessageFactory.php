@@ -33,12 +33,15 @@ class StaffMessageFactory extends Factory
         }else{
             $file = 'file/message/おたより.pdf';
         }
+        $dateTime = $this->faker->dateTimeBetween('-1 year', 'now');
         return [
             'to_type' => $type,
             'to' => $to,
             'title' => fake()->word(),
             'detail' => fake()->sentence(),
             'file_path' => $file,
+            'created_at' => $dateTime,
+            'updated_at' => $dateTime,
         ];
     }
 }
