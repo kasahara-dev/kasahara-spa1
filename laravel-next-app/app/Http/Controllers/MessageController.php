@@ -20,9 +20,7 @@ class MessageController extends Controller
         $messages = User::find($userId)->getMessages();
 
         // 送受信区分、タイトル、本文
-        return response()->json([
-            $messages
-        ]);
+        return response()->json($messages);
     }
 
     /**

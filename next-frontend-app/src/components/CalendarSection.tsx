@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { ja } from "date-fns/locale";
-import { parseISO, isWithinInterval, isSameDay } from "date-fns";
+import { parseISO, isWithinInterval } from "date-fns";
 import { useSession } from "next-auth/react";
 
 interface CalendarEvent {

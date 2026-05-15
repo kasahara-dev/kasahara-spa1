@@ -51,7 +51,7 @@ class User extends Authenticatable
                 $messages[] = [
                     'sent' => '0',
                     'to_type' => '0',
-                    'to' => $message->to,
+                    'to' => '個人',
                     'title' => $message->title,
                     'detail' => $message->detail,
                     'file_path' => $message->file_path,
@@ -64,13 +64,14 @@ class User extends Authenticatable
                 ->whereIn('to', $groups)
                 ->get();
             foreach($forGroupMessages as $message){
+                $to = Group::find($message->to)->name;
                 $messages[] = [
                     'sent' => '0',
                     'to_type' => '1',
-                    'to' => $message->to,
+                    'to' => $to,
                     'title' => $message->title,
                     'detail' => $message->detail,
-                    'path' => $message->file_path,
+                    'file_path' => $message->file_path,
                     'created_at' => $message->created_at,
                 ];
             }
@@ -80,7 +81,7 @@ class User extends Authenticatable
             foreach($sendMessages as $message){
                 $messages[] = [
                     'sent' => '1',
-                    'title' => 'お問い合わせ',
+                    'to' => 'お問い合わせ',
                     'detail' => $message->detail,
                     'created_at' => $message->created_at,
                 ];
@@ -88,6 +89,9 @@ class User extends Authenticatable
         }else{
             $messages = 'staff';
         }
+    usort($messages, function ($a, $b) {
+        return $b['created_at'] <=> $a['created_at'];
+    });
         return $messages;
     }
 }

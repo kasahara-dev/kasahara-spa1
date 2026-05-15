@@ -5,7 +5,7 @@ import Providers from "./providers";
 import Header from "@/components/Header";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,7 +23,9 @@ export default function RootLayout({
     <html lang="ja" className={cn("font-sans", geist.variable)}>
       <body className="bg-parent-soft min-h-screen">
         <Providers>
-          <Header />
+          <div className="sticky top-0 z-50 w-full">
+            <Header />
+          </div>
           <main>{children}</main>
         </Providers>
       </body>
