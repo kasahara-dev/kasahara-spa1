@@ -17,5 +17,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('checkRole:parent')->group(function () {
         Route::get('/', [CalendarController::class, 'index']);
         Route::get('/messages',[MessageController::class,'index']);
+        // Route::get('/messages/{id}/download', [MessageController::class, 'download']);
     });
 });
+        Route::get('/messages/{id}/download', [MessageController::class, 'download']);

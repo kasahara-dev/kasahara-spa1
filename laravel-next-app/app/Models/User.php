@@ -52,6 +52,7 @@ class User extends Authenticatable
                     'sent' => '0',
                     'to_type' => '0',
                     'to' => '個人',
+                    'id' => $message->id,
                     'title' => $message->title,
                     'detail' => $message->detail,
                     'file_path' => $message->file_path,
@@ -69,6 +70,7 @@ class User extends Authenticatable
                     'sent' => '0',
                     'to_type' => '1',
                     'to' => $to,
+                    'id' => $message->id,
                     'title' => $message->title,
                     'detail' => $message->detail,
                     'file_path' => $message->file_path,
@@ -80,6 +82,7 @@ class User extends Authenticatable
             $sendMessages = ParentMessage::where('from', $this->id)->get();
             foreach($sendMessages as $message){
                 $messages[] = [
+                    'id' => $message->id,
                     'sent' => '1',
                     'to' => 'お問い合わせ',
                     'detail' => $message->detail,

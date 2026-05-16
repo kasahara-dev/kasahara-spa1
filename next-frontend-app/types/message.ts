@@ -3,6 +3,7 @@ export type SentDistinction = "0" | "1"; // 0:受信, 1:送信
 
 export interface Message {
     sent: SentDistinction;
+    id: string | number;
     title?: string;
     detail: string;
     created_at: string;
