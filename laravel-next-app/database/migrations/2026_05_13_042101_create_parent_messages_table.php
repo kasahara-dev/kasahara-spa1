@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('parent_messages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('from')->constrained('users');
-            $table->string('detail');
+            $table->text('detail');
             $table->timestamps();
         });
     }

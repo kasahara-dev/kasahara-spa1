@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ParentMessage;
 use Illuminate\Http\Request;
+use App\Http\Requests\MessageRequest;
 use App\Models\Parent_message;
 use App\Models\Staff_message;
 use App\Models\User;
 use Illuminate\Support\Str;
 use App\Models\StaffMessage;
 use Illuminate\Support\Facades\Storage;
+use PhpParser\NodeVisitor\ParentConnectingVisitor;
 
 class MessageController extends Controller
 {
@@ -18,22 +21,18 @@ class MessageController extends Controller
     public function index()
     {
         $userId = auth()->id();
-        // $userId = 2;
-
         $messages = User::find($userId)->getMessages();
 
-        // 送受信区分、タイトル、本文
         return response()->json($messages);
     }
     public function download(Request $request, $id)
     {
         $message = StaffMessage::findOrFail($id);
         $filePath = $message->file_path;
-        // $cleanedPath = Str::replaceFirst('storage/', '', $filePath);
         $absolutePath = storage_path('app/public/' . $filePath);
 
         if (!file_exists($absolutePath)) {
-            $absolutePath = public_path($filePath); // そのまま渡すだけでピッタリ一致！
+            $absolutePath = public_path($filePath);
         }
         if (!file_exists($absolutePath)) {
             abort(404, 'ファイルが存在しません。');
@@ -45,9 +44,17 @@ class MessageController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(MessageRequest $request)
     {
-        //
+        $validated = $request->validated();
+        $message = ParentMessage::create([
+            'from' => auth()->id(),
+            'detail'  => $validated['detail'],
+        ]);
+        return response()->json([
+            'success' => true,
+            'message' => 'お問い合わせを送信しました。',
+        ], 201);
     }
 
     /**

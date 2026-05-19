@@ -3,6 +3,7 @@
 import CalendarSection from "@/components/CalendarSection";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { useSession } from "next-auth/react";
 import {
   Card,
   CardContent,
@@ -14,23 +15,52 @@ import { useState } from "react";
 import Link from "next/link";
 
 export default function Home() {
+  const { data: session } = useSession();
   const [detail, setDetail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [errors, setErrors] = useState<{ [key: string]: string[] }>({});
+  const token = session?.accessToken;
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!detail.trim()) return;
 
     setIsSubmitting(true);
+    setErrors({});
 
-    // TODO: ここにLaravel API（プロキシ経由）への送信処理を書く
-    // await axios.post('/api/proxy/contacts', { detail })
-
-    setTimeout(() => {
+    try {
+      // 1. プロキシ経由でLaravelにお問い合わせデータをPOSTする
+      const response = await fetch("/api/proxy/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`, // 👈 ダウンロードと同じお守り！
+        },
+        // 2. 入力されたデータをJSON文字列にして送る
+        body: JSON.stringify({
+          detail: detail,
+        }),
+      });
+      if (response.status === 201) {
+        alert("お問い合わせを送信しました！");
+        setDetail("");
+        return;
+      }
+      if (response.status === 422) {
+        const errorData = await response.json();
+        setErrors(errorData.errors || {});
+        alert("入力内容に不備があります。画面のメッセージを確認してください。");
+        return;
+      }
+      throw new Error("送信リクエストに失敗しました");
+    } catch (error) {
+      console.error("送信エラー:", error);
+      alert("送信に失敗しました。時間を置いて再度お試しください。");
+    } finally {
       setIsSubmitting(false);
-      setDetail("");
-      alert("お問い合わせを送信しました！");
-    }, 1000);
+    }
   };
   return (
     <div className="px-4 pb-20 flex flex-col items-center">
@@ -63,6 +93,11 @@ export default function Home() {
                     required
                     className="resize-none focus-visible:ring-primary text-sm bg-muted/20 h-48"
                   />
+                  {errors.detail && (
+                    <p className="text-sm text-red-500 font-medium mt-1">
+                      {errors.detail[0]}
+                    </p>
+                  )}
                 </div>
 
                 <Button
