@@ -19,7 +19,7 @@ class GroupUserSeeder extends Seeder
         foreach ($categories as $cat) {
             $groupsByCategory[$cat] = Group::where('category', $cat)->pluck('id');
         }
-        User::all()->each(function ($user) use ($categories, $groupsByCategory) {
+        User::where('role','parent')->each(function ($user) use ($categories, $groupsByCategory) {
             $attachIds = [];
 
             foreach ($categories as $cat) {

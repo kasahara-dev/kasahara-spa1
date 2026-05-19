@@ -14,60 +14,64 @@ class GroupSeeder extends Seeder
     public function run(): void
     {
         Group::create([
+            'name' => '全員',
+            'category' => '0',
+        ]);
+        Group::create([
             'name' => '年少',
-            'category' => '0',
+            'category' => '1',
         ]);
         Group::create([
             'name' => '年中',
-            'category' => '0',
+            'category' => '1',
         ]);
         Group::create([
             'name' => '年中',
-            'category' => '0',
+            'category' => '1',
         ]);
         Group::create([
             'name' => 'うさぎ組',
-            'category' => '1',
+            'category' => '2',
         ]);
         Group::create([
             'name' => 'りす組',
-            'category' => '1',
+            'category' => '2',
         ]);
         Group::create([
             'name' => 'いちご組',
-            'category' => '1',
+            'category' => '2',
         ]);
         Group::create([
             'name' => 'りんご組',
-            'category' => '1',
+            'category' => '2',
         ]);
         Group::create([
             'name' => 'ほし組',
-            'category' => '1',
+            'category' => '2',
         ]);
         Group::create([
             'name' => 'うみ組',
-            'category' => '1',
+            'category' => '2',
         ]);
         Group::create([
             'name' => 'にじ組',
-            'category' => '1',
+            'category' => '2',
         ]);
         Group::create([
             'name' => 'つき組',
-            'category' => '1',
+            'category' => '2',
         ]);
         Group::create([
             'name' => '歩きコース',
-            'category' => '2',
+            'category' => '3',
         ]);
         Group::create([
             'name' => 'みどりコース',
-            'category' => '2',
+            'category' => '3',
         ]);
         Group::create([
             'name' => 'きいろコース',
-            'category' => '2',
+            'category' => '3',
         ]);
     }
 }
