@@ -6,6 +6,7 @@ use App\Http\Controllers\BusController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\ProfileController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -19,5 +20,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/messages',[MessageController::class,'index']);
         Route::post('/messages',[MessageController::class,'store']);
         Route::get('/messages/{id}/download', [MessageController::class, 'download']);
+        Route::get('/profile',[ProfileController::class,'index']);
+        Route::patch('/profile',[ProfileController::class,'update']);
     });
 });

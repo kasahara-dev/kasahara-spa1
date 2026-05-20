@@ -20,6 +20,7 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [errors, setErrors] = useState<{ [key: string]: string[] }>({});
+  const [successMessage, setSuccessMessage] = useState<string>("");
   const token = session?.accessToken;
 
   const handleContactSubmit = async (e: React.FormEvent) => {
@@ -30,34 +31,39 @@ export default function Home() {
     setErrors({});
 
     try {
-      // 1. プロキシ経由でLaravelにお問い合わせデータをPOSTする
+      setErrors({});
+      setSuccessMessage("");
+
       const response = await fetch("/api/proxy/messages", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          Authorization: `Bearer ${token}`, // 👈 ダウンロードと同じお守り！
+          Authorization: `Bearer ${token}`,
         },
-        // 2. 入力されたデータをJSON文字列にして送る
         body: JSON.stringify({
           detail: detail,
         }),
       });
+
       if (response.status === 201) {
-        alert("お問い合わせを送信しました！");
+        setSuccessMessage("お問い合わせを送信しました。");
         setDetail("");
         return;
       }
+
       if (response.status === 422) {
         const errorData = await response.json();
         setErrors(errorData.errors || {});
-        alert("入力内容に不備があります。画面のメッセージを確認してください。");
         return;
       }
+
       throw new Error("送信リクエストに失敗しました");
     } catch (error) {
       console.error("送信エラー:", error);
-      alert("送信に失敗しました。時間を置いて再度お試しください。");
+      setErrors({
+        global: ["送信に失敗しました。時間を置いて再度お試しください。"],
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -93,13 +99,22 @@ export default function Home() {
                     required
                     className="resize-none focus-visible:ring-primary text-sm bg-muted/20 h-48"
                   />
+                  {successMessage && (
+                    <p className="text-sm text-green-600 font-medium mt-1">
+                      {successMessage}
+                    </p>
+                  )}
                   {errors.detail && (
                     <p className="text-sm text-red-500 font-medium mt-1">
                       {errors.detail[0]}
                     </p>
                   )}
+                  {errors.global && (
+                    <p className="text-sm text-red-500 font-medium mt-1">
+                      {errors.global[0]}
+                    </p>
+                  )}
                 </div>
-
                 <Button
                   type="submit"
                   className="w-full text-sm font-medium flex items-center justify-center gap-2"
@@ -122,7 +137,9 @@ export default function Home() {
           </Card>
         </div>
         <div className="my-2">
-          <h2 className="underline text-primary font-bold">保護者情報編集</h2>
+          <Link href="/profile">
+            <h2 className="underline text-primary font-bold">保護者情報編集</h2>
+          </Link>
         </div>
       </div>
     </div>

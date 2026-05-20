@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\User;
+use App\Models\Profile;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -24,17 +25,14 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
-        $users = User::pluck('account_id')->toArray();
-        $accountId = $this->faker->unique()->randomNumber();
-        while(in_array($accountId,$users)){
-            $accountId = $this->faker->unique()->randomNumber();
-        }
+        $accountId = $this->faker->unique()->numerify('########');
         $rand = rand(1, 100);
         if($rand > 50){
             $role = 'staff';
         }else{
             $role = 'parent';
         }
+
         return [
             'account_id'=> $accountId,
             'role'=> $role,
@@ -42,7 +40,16 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
         ];
     }
-
+    public function configure(): static
+    {
+        return $this->afterCreating(function (User $user) {
+            if ($user->role === 'parent') {
+                Profile::factory()->create([
+                    'user_id' => $user->id,
+                ]);
+            }
+        });
+    }
     /**
      * Indicate that the model's email address should be unverified.
      */
