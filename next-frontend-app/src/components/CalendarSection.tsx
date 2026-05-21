@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { ja } from "date-fns/locale";
 import { parseISO, isWithinInterval,format } from "date-fns";
 import { useSession } from "next-auth/react";
@@ -59,7 +60,7 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
   const token = session?.accessToken;
   const [isModalOpen, setIsModalOpen] = React.useState(false);
 
-  const [formStatus, setFormStatus] = React.useState<number>(0); // 0=出席, 1=欠席, 2=遅刻その他
+  const [formStatus, setFormStatus] = React.useState<number>(0);
   const [formDetail, setFormDetail] = React.useState<string>("");
 
   React.useEffect(() => {
@@ -107,17 +108,14 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
     const dayData = data.calendar_data.find(
       (item) => item.date === targetDateStr,
     );
-
-    // 休みの日、または期間外なら中断
     const isClosed = dayData?.working === 0;
     const start = parseISO(data.config.start_date);
     const end = parseISO(data.config.end_date);
     const isOutOfInterval = !isWithinInterval(selectedDate, { start, end });
     if (isClosed || isOutOfInterval) return;
 
-    // 💡 モーダルを開く前に、現在の出欠データをフォームの初期値にセットする
-    const currentStatus = dayData?.attendance?.status ?? 0; // 無い場合は 0（出席）
-    const currentDetail = dayData?.attendance?.detail ?? ""; // 無い場合は 空文字
+    const currentStatus = dayData?.attendance?.status ?? 0;
+    const currentDetail = dayData?.attendance?.detail ?? "";
     setFormStatus(currentStatus);
     setFormDetail(currentDetail);
 
@@ -196,8 +194,8 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
 
           return (
             <div className="fixed inset-x-0 bottom-0 top-[64px] z-40 bg-parent-soft overflow-y-auto">
-              <div className="sticky top-0 z-10 bg-parent-soft border-b border-muted">
-                <div className="max-w-2xl mx-auto px-6 py-3 flex items-center justify-end">
+              <div className="max-w-2xl mx-auto px-6 py-6 space-y-8 flex flex-col">
+                <div className="flex justify-end">
                   <button
                     onClick={() => setIsModalOpen(false)}
                     className="w-10 h-10 flex items-center justify-center rounded-full bg-muted/60 text-muted-foreground hover:bg-muted transition-colors"
@@ -205,10 +203,6 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-              </div>
-
-              <div className="max-w-2xl mx-auto px-6 py-6 space-y-8 flex flex-col">
-                {/* セクション1: 現在の出欠予定 */}
                 <section className="space-y-2">
                   <h3 className="underline text-primary font-bold text-lg">
                     {formattedDate}の出欠予定
@@ -224,8 +218,6 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
                     </p>
                   </div>
                 </section>
-
-                {/* セクション2: 出欠予定変更 */}
                 <section className="space-y-4">
                   <h3 className="underline text-primary font-bold text-lg">
                     {formattedDate}の出欠予定変更
@@ -238,81 +230,93 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
                     );
 
                     return (
-                      <div className="bg-background border border-muted p-4 rounded-xl space-y-4">
-                        <RadioGroup
-                          value={String(formStatus)}
-                          onValueChange={(value) =>
-                            setFormStatus(Number(value))
-                          }
-                          className="flex items-center gap-6"
-                          disabled={isExpired}
-                        >
-                          {[
-                            { label: "出席", value: 0 },
-                            { label: "欠席", value: 1 },
-                            { label: "遅刻その他", value: 2 },
-                          ].map((item) => (
-                            <div
-                              key={item.value}
-                              className="flex items-center space-x-2"
-                            >
-                              <RadioGroupItem
-                                value={String(item.value)}
-                                id={`status-${item.value}`}
-                                disabled={isExpired}
-                              />
-                              <Label
-                                htmlFor={`status-${item.value}`}
-                                className={`font-medium ${isExpired ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer"}`}
-                              >
-                                {item.label}
-                              </Label>
-                            </div>
-                          ))}
-                        </RadioGroup>
-
-                        {formStatus === 2 && (
-                          <div className="space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
-                            <label className="text-xs text-muted-foreground font-medium">
-                              詳細を入力してください
-                            </label>
-                            <input
-                              type="text"
-                              value={formDetail}
-                              onChange={(e) => setFormDetail(e.target.value)}
-                              placeholder="通院のため、10時ごろ登園します"
-                              disabled={isExpired}
-                              className="w-full px-3 py-2 text-sm bg-parent-soft border border-muted rounded-lg focus:outline-none focus:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            />
-                          </div>
-                        )}
-
-                        <div className="pt-2 space-y-3">
-                          <Button
-                            type="button"
-                            disabled={isExpired}
-                            onClick={() =>
-                              alert(
-                                `ステータス: ${formStatus}, 詳細: ${formDetail} で保存します`,
-                              )
+                      <Card className="overflow-hidden shadow-sm">
+                        <CardContent className="px-5 space-y-5">
+                          <RadioGroup
+                            value={String(formStatus)}
+                            onValueChange={(value) =>
+                              setFormStatus(Number(value))
                             }
-                            className="w-full md:w-48 font-medium"
+                            className="flex flex-wrap items-center gap-6"
+                            disabled={isExpired}
                           >
-                            変更を保存する
-                          </Button>
+                            {[
+                              { label: "出席", value: 0 },
+                              { label: "欠席", value: 1 },
+                              { label: "遅刻その他", value: 2 },
+                            ].map((item) => (
+                              <div
+                                key={item.value}
+                                className="flex items-center space-x-2"
+                              >
+                                <RadioGroupItem
+                                  value={String(item.value)}
+                                  id={`status-${item.value}`}
+                                  disabled={isExpired}
+                                />
+                                <Label
+                                  htmlFor={`status-${item.value}`}
+                                  className={`font-medium text-sm ${
+                                    isExpired
+                                      ? "cursor-not-allowed text-muted-foreground"
+                                      : "cursor-pointer"
+                                  }`}
+                                >
+                                  {item.label}
+                                </Label>
+                              </div>
+                            ))}
+                          </RadioGroup>
+                          {formStatus === 2 && (
+                            <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                              <Label className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
+                                詳細を入力してください
+                                <span className="text-red-500 font-bold bg-red-50 dark:bg-red-950/40 px-1.5 py-0.5 rounded text-[10px]">
+                                  必須
+                                </span>
+                              </Label>
 
-                          <p className="text-red-500 text-xs sm:text-sm font-medium leading-relaxed">
-                            ※アプリでの出欠予定変更は当日{deadlineTime}
-                            まで可能です
-                          </p>
-                        </div>
-                      </div>
+                              {/* shadcnのInputを使用（手書きスタイルより一歩格好良くなります） */}
+                              <Input
+                                type="text"
+                                value={formDetail}
+                                onChange={(e) => setFormDetail(e.target.value)}
+                                placeholder="通院のため、10時ごろ登園します"
+                                disabled={isExpired}
+                                className="w-full"
+                              />
+                            </div>
+                          )}
+
+                          {/* ボタンと注意書きエリア */}
+                          <div className="pt-2 space-y-3">
+                            <Button
+                              type="button"
+                              disabled={isExpired}
+                              onClick={() => {
+                                // 💡 必須入力の簡単なバリデーションチェック
+                                if (formStatus === 2 && !formDetail.trim()) {
+                                  alert("詳細を入力してください");
+                                  return;
+                                }
+                                alert(
+                                  `ステータス: ${formStatus}, 詳細: ${formDetail} で保存します`,
+                                );
+                              }}
+                              className="w-full md:w-48 font-medium shadow-sm"
+                            >
+                              変更を保存する
+                            </Button>
+                            <p className="text-red-500 text-xs font-medium leading-relaxed text-center md:text-start">
+                              ※アプリでの変更は当日{deadlineTime}まで可能です
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
                     );
                   })()}
                 </section>
-
-                {/* 💡 【復活】セクション3: 園の予定（イベント一覧） */}
-                <section className="space-y-4">
+                <section className="space-y-4 pb-20">
                   <h3 className="underline text-primary font-bold text-lg">
                     {formattedDate}の予定
                   </h3>
@@ -320,22 +324,15 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
                     {dayData && dayData.events && dayData.events.length > 0 ? (
                       <div className="space-y-4">
                         {dayData.events.map((event) => (
-                          /* 💡 ここを shadcn の Card に置き換え */
                           <Card
                             key={event.id}
                             className="relative overflow-hidden shadow-sm"
                           >
-                            {/* 左端のアクセントカラー線はそのままキープ */}
                             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-primary" />
-
-                            {/* CardContent でパディング（p-5相当）を確保 */}
                             <CardContent className="p-5 pl-7 space-y-3">
-                              {/* イベントタイトル */}
                               <h4 className="font-bold text-foreground text-base tracking-tight">
                                 {event.title}
                               </h4>
-
-                              {/* 詳細（detail）の表示 */}
                               {event.detail ? (
                                 <div className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed bg-muted/30 p-3.5 rounded-lg border border-muted/40">
                                   {event.detail}
@@ -350,8 +347,7 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
                         ))}
                       </div>
                     ) : (
-                      /* 予定がないときの表示（変更なし） */
-                      <div className="flex flex-col items-center justify-center p-8 border border-dashed border-muted rounded-xl bg-muted/20 text-center">
+                      <div className="flex flex-col border border-dashed border-muted rounded-xl bg-muted/20">
                         <p className="text-sm text-muted-foreground font-medium">
                           この日の予定はありません
                         </p>
