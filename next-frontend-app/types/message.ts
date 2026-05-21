@@ -1,5 +1,5 @@
-export type MessageType = "0" | "1"; // 0:個人, 1:グループ
-export type SentDistinction = "0" | "1"; // 0:受信, 1:送信
+export type MessageType = "0" | "1";
+export type SentDistinction = "0" | "1";
 
 export interface Message {
     sent: SentDistinction;
