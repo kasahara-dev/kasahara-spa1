@@ -3,6 +3,7 @@
 return [
     'start_date' => '2026-04-01',
     'end_date' => '2027-03-31',
+    'deadline_time' => '08:00',
     'close_dates' => [
         '2026-04-01',
         '2026-04-02',
