@@ -22,7 +22,7 @@ class AttendanceFactory extends Factory
     {
         $randStatus = rand(1, 2);
         if($randStatus == 2){
-            $detail = fake()->sentence();
+            $detail = fake()->text();
         }else{
             $detail = null;
         }

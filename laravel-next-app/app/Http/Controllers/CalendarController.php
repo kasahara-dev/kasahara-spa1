@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\CalendarService;
 use App\Models\Calendar;
 
 class CalendarController extends Controller
@@ -11,7 +10,7 @@ class CalendarController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request, CalendarService $service)
+    public function index()
     {
         $config = [
             'start_date' => config('app_settings.start_date'),

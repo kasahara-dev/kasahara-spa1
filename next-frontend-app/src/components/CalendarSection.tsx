@@ -2,27 +2,10 @@
 
 import * as React from "react";
 import { Calendar } from "@/components/ui/calendar";
-import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { ja } from "date-fns/locale";
-import { parseISO, isWithinInterval,format } from "date-fns";
+import { parseISO, isWithinInterval, format } from "date-fns";
 import { useSession } from "next-auth/react";
-import { X } from "lucide-react";
-const isPastDeadline = (
-  targetDateStr: string,
-  deadlineTime: string,
-): boolean => {
-  const jstString = new Date().toLocaleString("ja-JP", {
-    timeZone: "Asia/Tokyo",
-  });
-  const now = new Date(jstString);
-  const deadline = new Date(`${targetDateStr}T${deadlineTime}`);
-
-  return now > deadline;
-};
+import { AttendanceModal } from "./AttendanceModal";
 
 interface CalendarEvent {
   id: number;
@@ -30,13 +13,9 @@ interface CalendarEvent {
   detail?: string | null;
 }
 interface CalendarApiResponse {
-  config: {
-    start_date: string;
-    end_date: string;
-    deadline_time: string;
-  };
-
+  config: { start_date: string; end_date: string; deadline_time: string };
   calendar_data: Array<{
+    id: number;
     date: string;
     working: number;
     events: CalendarEvent[];
@@ -53,54 +32,134 @@ interface CalendarApiResponse {
 export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
   const [data, setData] = React.useState<CalendarApiResponse | null>(null);
   const { data: session } = useSession();
+  const token = session?.accessToken;
 
   const [date, setDate] = React.useState<Date | undefined>(undefined);
   const [month, setMonth] = React.useState<Date>(new Date());
-
-  const token = session?.accessToken;
   const [isModalOpen, setIsModalOpen] = React.useState(false);
 
-  const [formStatus, setFormStatus] = React.useState<number>(0);
-  const [formDetail, setFormDetail] = React.useState<string>("");
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [submitMessage, setSubmitMessage] = React.useState<string>("");
+  const [submitMessageType, setSubmitMessageType] = React.useState<
+    "success" | "error" | ""
+  >("");
 
-  React.useEffect(() => {
+  const fetchCalendarData = React.useCallback(() => {
     if (!token) return;
     fetch(apiUrl, {
       method: "GET",
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
     })
       .then((res) => {
-        if (!res.ok) {
-          throw new Error(`エラーが発生しました: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`エラー: ${res.status}`);
         return res.json();
       })
       .then((json: CalendarApiResponse) => {
         setData(json);
-
-        const start = parseISO(json.config.start_date);
-        const end = parseISO(json.config.end_date);
-        const today = new Date();
-        const isTodayInInterval = isWithinInterval(today, { start, end });
-
-        if (isTodayInInterval) {
-          setMonth(today);
-          setDate(today);
-        } else {
-          if (today > end) {
-            setMonth(end);
-            setDate(end);
-          } else {
-            setMonth(start);
-            setDate(start);
-          }
-        }
+        setDate((prev) => {
+          if (prev) return prev;
+          const start = parseISO(json.config.start_date);
+          const end = parseISO(json.config.end_date);
+          const today = new Date();
+          if (isWithinInterval(today, { start, end })) return today;
+          return today > end ? end : start;
+        });
       })
       .catch((err) => console.error("データ取得に失敗:", err));
   }, [apiUrl, token]);
+
+  React.useEffect(() => {
+    fetchCalendarData();
+  }, [fetchCalendarData]);
+
+  const handleSaveAttendance = async (
+    formStatus: number,
+    formDetail: string,
+  ) => {
+    if (!token || !date || !data) return;
+
+    setSubmitMessage("");
+    setSubmitMessageType("");
+
+    if (formStatus === 2 && !formDetail.trim()) {
+      setSubmitMessage("詳細を入力してください");
+      setSubmitMessageType("error");
+      return;
+    }
+
+    const targetDateStr = format(date, "yyyy-MM-dd");
+    const dayData = data.calendar_data.find(
+      (item) => item.date === targetDateStr,
+    );
+    const calendarId = dayData?.id || dayData?.attendance?.calendar_id;
+    const hasExistingAttendance = !!dayData?.attendance;
+
+    const baseUrl = apiUrl.endsWith("/")
+      ? `${apiUrl}attendance`
+      : `${apiUrl}/attendance`;
+    let requestUrl = baseUrl;
+    let requestMethod = "POST";
+    let requestBody: {
+      calendar_id: number | undefined;
+      status: number;
+      detail: string;
+    } | null = null;
+
+    if (formStatus === 0) {
+      if (!calendarId)
+        return setFormError("カレンダーIDが特定できないため、削除できません");
+      requestUrl = `${baseUrl}/${calendarId}`;
+      requestMethod = "DELETE";
+    } else {
+      if (hasExistingAttendance && !calendarId)
+        return setFormError("カレンダーIDが特定できないため、更新できません");
+      if (hasExistingAttendance) {
+        requestUrl = `${baseUrl}/${calendarId}`;
+        requestMethod = "PUT";
+      }
+      requestBody = {
+        calendar_id: calendarId,
+        status: formStatus,
+        detail: formStatus === 2 ? formDetail : "",
+      };
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(requestUrl, {
+        method: requestMethod,
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: requestBody ? JSON.stringify(requestBody) : null,
+      });
+
+      if (!response.ok) {
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.message || "保存に失敗しました");
+      }
+
+      const result = await response.json();
+      setSubmitMessage(result.message || "出欠予定を保存しました");
+      setSubmitMessageType("success");
+      fetchCalendarData();
+    } catch (error) {
+      setSubmitMessage(
+        `エラー: ${error instanceof Error ? error.message : "未知のエラー"}`,
+      );
+      setSubmitMessageType("error");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const setFormError = (msg: string) => {
+    setSubmitMessage(msg);
+    setSubmitMessageType("error");
+  };
+
   const handleDateSelect = (selectedDate: Date | undefined) => {
     if (!data || !selectedDate) return;
 
@@ -111,14 +170,11 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
     const isClosed = dayData?.working === 0;
     const start = parseISO(data.config.start_date);
     const end = parseISO(data.config.end_date);
-    const isOutOfInterval = !isWithinInterval(selectedDate, { start, end });
-    if (isClosed || isOutOfInterval) return;
 
-    const currentStatus = dayData?.attendance?.status ?? 0;
-    const currentDetail = dayData?.attendance?.detail ?? "";
-    setFormStatus(currentStatus);
-    setFormDetail(currentDetail);
+    if (isClosed || !isWithinInterval(selectedDate, { start, end })) return;
 
+    setSubmitMessage("");
+    setSubmitMessageType("");
     setDate(selectedDate);
     setIsModalOpen(true);
   };
@@ -131,9 +187,11 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
   const closedDays = data.calendar_data
     .filter((item) => item.working === 0)
     .map((item) => parseISO(item.date));
-
   const minDate = parseISO(data.config.start_date);
   const maxDate = parseISO(data.config.end_date);
+  const selectedDayData = data.calendar_data.find(
+    (item) => item.date === (date ? format(date, "yyyy-MM-dd") : ""),
+  );
 
   return (
     <>
@@ -169,196 +227,19 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
             "relative after:content-[''] after:absolute after:bottom-1 md:after:bottom-3 after:left-1/2 after:-translate-x-1/2 after:w-2 after:h-2 after:bg-primary after:rounded-full aria-selected:after:bg-primary-foreground",
         }}
       />
-      {isModalOpen &&
-        date &&
-        (() => {
-          const formattedDate = format(date, "M月d日", { locale: ja });
-          const targetDateStr = format(date, "yyyy-MM-dd");
-          const dayData = data.calendar_data.find(
-            (item) => item.date === targetDateStr,
-          );
-          const attendance = dayData?.attendance;
 
-          let statusText = "出席";
-          let statusColor =
-            "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30";
-          if (attendance) {
-            if (attendance.status === 1) {
-              statusText = "欠席";
-              statusColor = "text-red-600 bg-red-50 dark:bg-red-950/30";
-            } else if (attendance.status === 2) {
-              statusText = "遅刻その他";
-              statusColor = "text-amber-600 bg-amber-50 dark:bg-amber-950/30";
-            }
-          }
-
-          return (
-            <div className="fixed inset-x-0 bottom-0 top-[64px] z-40 bg-parent-soft overflow-y-auto">
-              <div className="max-w-2xl mx-auto px-6 py-6 space-y-8 flex flex-col">
-                <div className="flex justify-end">
-                  <button
-                    onClick={() => setIsModalOpen(false)}
-                    className="w-10 h-10 flex items-center justify-center rounded-full bg-muted/60 text-muted-foreground hover:bg-muted transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-                <section className="space-y-2">
-                  <h3 className="underline text-primary font-bold text-lg">
-                    {formattedDate}の出欠予定
-                  </h3>
-                  <div className="">
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusColor}`}
-                    >
-                      {statusText}
-                    </span>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {attendance?.detail}
-                    </p>
-                  </div>
-                </section>
-                <section className="space-y-4">
-                  <h3 className="underline text-primary font-bold text-lg">
-                    {formattedDate}の出欠予定変更
-                  </h3>
-                  {(() => {
-                    const deadlineTime = data.config.deadline_time ?? "08:00";
-                    const isExpired = isPastDeadline(
-                      targetDateStr,
-                      deadlineTime,
-                    );
-
-                    return (
-                      <Card className="overflow-hidden shadow-sm">
-                        <CardContent className="px-5 space-y-5">
-                          <RadioGroup
-                            value={String(formStatus)}
-                            onValueChange={(value) =>
-                              setFormStatus(Number(value))
-                            }
-                            className="flex flex-wrap items-center gap-6"
-                            disabled={isExpired}
-                          >
-                            {[
-                              { label: "出席", value: 0 },
-                              { label: "欠席", value: 1 },
-                              { label: "遅刻その他", value: 2 },
-                            ].map((item) => (
-                              <div
-                                key={item.value}
-                                className="flex items-center space-x-2"
-                              >
-                                <RadioGroupItem
-                                  value={String(item.value)}
-                                  id={`status-${item.value}`}
-                                  disabled={isExpired}
-                                />
-                                <Label
-                                  htmlFor={`status-${item.value}`}
-                                  className={`font-medium text-sm ${
-                                    isExpired
-                                      ? "cursor-not-allowed text-muted-foreground"
-                                      : "cursor-pointer"
-                                  }`}
-                                >
-                                  {item.label}
-                                </Label>
-                              </div>
-                            ))}
-                          </RadioGroup>
-                          {formStatus === 2 && (
-                            <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
-                              <Label className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-                                詳細を入力してください
-                                <span className="text-red-500 font-bold bg-red-50 dark:bg-red-950/40 px-1.5 py-0.5 rounded text-[10px]">
-                                  必須
-                                </span>
-                              </Label>
-
-                              {/* shadcnのInputを使用（手書きスタイルより一歩格好良くなります） */}
-                              <Input
-                                type="text"
-                                value={formDetail}
-                                onChange={(e) => setFormDetail(e.target.value)}
-                                placeholder="通院のため、10時ごろ登園します"
-                                disabled={isExpired}
-                                className="w-full"
-                              />
-                            </div>
-                          )}
-
-                          {/* ボタンと注意書きエリア */}
-                          <div className="pt-2 space-y-3">
-                            <Button
-                              type="button"
-                              disabled={isExpired}
-                              onClick={() => {
-                                // 💡 必須入力の簡単なバリデーションチェック
-                                if (formStatus === 2 && !formDetail.trim()) {
-                                  alert("詳細を入力してください");
-                                  return;
-                                }
-                                alert(
-                                  `ステータス: ${formStatus}, 詳細: ${formDetail} で保存します`,
-                                );
-                              }}
-                              className="w-full md:w-48 font-medium shadow-sm"
-                            >
-                              変更を保存する
-                            </Button>
-                            <p className="text-red-500 text-xs font-medium leading-relaxed text-center md:text-start">
-                              ※アプリでの変更は当日{deadlineTime}まで可能です
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })()}
-                </section>
-                <section className="space-y-4 pb-20">
-                  <h3 className="underline text-primary font-bold text-lg">
-                    {formattedDate}の予定
-                  </h3>
-                  <div className="pt-1">
-                    {dayData && dayData.events && dayData.events.length > 0 ? (
-                      <div className="space-y-4">
-                        {dayData.events.map((event) => (
-                          <Card
-                            key={event.id}
-                            className="relative overflow-hidden shadow-sm"
-                          >
-                            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-primary" />
-                            <CardContent className="p-5 pl-7 space-y-3">
-                              <h4 className="font-bold text-foreground text-base tracking-tight">
-                                {event.title}
-                              </h4>
-                              {event.detail ? (
-                                <div className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed bg-muted/30 p-3.5 rounded-lg border border-muted/40">
-                                  {event.detail}
-                                </div>
-                              ) : (
-                                <p className="text-xs text-muted-foreground/70 italic pl-1">
-                                  ※詳細の登録はありません
-                                </p>
-                              )}
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col border border-dashed border-muted rounded-xl bg-muted/20">
-                        <p className="text-sm text-muted-foreground font-medium">
-                          この日の予定はありません
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </section>
-              </div>
-            </div>
-          );
-        })()}
+      {isModalOpen && date && (
+        <AttendanceModal
+          date={date}
+          dayData={selectedDayData}
+          deadlineTime={data.config.deadline_time ?? "08:00"}
+          isSaving={isSaving}
+          submitMessage={submitMessage}
+          submitMessageType={submitMessageType}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSaveAttendance}
+        />
+      )}
     </>
   );
 }
