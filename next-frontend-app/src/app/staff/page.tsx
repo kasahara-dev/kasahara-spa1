@@ -1,3 +1,5 @@
+// 📄 @/app/staff/page.tsx
+
 "use client";
 
 import * as React from "react";
@@ -5,42 +7,16 @@ import { format, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useSession } from "next-auth/react";
 import CalendarSection from "@/components/staff/CalendarSection";
+import {
+  StaffCalendarResponse,
+  AttendanceRecord,
+} from "@/../../types/calendar";
 
-// --- 型定義 ---
-interface CalendarEvent {
-  id: number;
+// 💡 イベント型をローカルで扱いやすいように定義（またはimport元に合わせてください）
+interface EventItem {
+  id: string | number;
   title: string;
-  detail?: string | null;
-}
-
-interface UserInfo {
-  id: number;
-  name: string;
-}
-
-interface AttendanceRecord {
-  id: number;
-  status: number; // 2: 欠席, 3: 遅刻
-  detail: string | null;
-  user_id: number;
-  user?: UserInfo;
-}
-
-interface CalendarDayData {
-  id: number;
-  date: string;
-  working: number;
-  events: CalendarEvent[];
-  attendance: AttendanceRecord[];
-}
-
-// Laravelの StaffCalendarController::class から返ってくる全体の型
-interface StaffCalendarResponse {
-  config: {
-    start_date: string;
-    end_date: string;
-  };
-  calendar_data: CalendarDayData[];
+  detail: string;
 }
 
 export default function Home() {
@@ -51,21 +27,24 @@ export default function Home() {
   const { data: session } = useSession();
   const token = session?.accessToken;
 
-  // 💡 1. データの取得はここ「1回だけ」実行
+  // 💡 モーダル管理用のステート
+  const [editingEvent, setEditingEvent] = React.useState<EventItem | null>(
+    null,
+  );
+  const [editTitle, setEditTitle] = React.useState("");
+  const [editDetail, setEditDetail] = React.useState("");
+
   React.useEffect(() => {
     if (!token) return;
     async function fetchAllData() {
       try {
-        // Laravelの Route::prefix('staff')->group(...) の `Route::get('/', ...)` に対応
         const res = await fetch("/api/proxy/staff", {
           method: "GET",
           headers: {
             Accept: "application/json",
-            Authorization: `Bearer ${token}`, // 💡 認証トークンを添える
+            Authorization: `Bearer ${token}`,
           },
         });
-        console.log("【デバッグ】APIステータスコード:", res.status);
-        console.log("Token:", token);
         if (!res.ok) throw new Error("データの取得に失敗しました");
         const data: StaffCalendarResponse = await res.json();
         setStaffData(data);
@@ -78,21 +57,16 @@ export default function Home() {
     fetchAllData();
   }, [token]);
 
-  // カレンダー配列を安全に抽出
   const calendarData = staffData?.calendar_data ?? [];
 
-  // 2. 選択された「特定の日」のデータを抽出
   const selectedDayData = React.useMemo(() => {
     if (!date || calendarData.length === 0) return null;
     const formattedTarget = format(date, "yyyy-MM-dd");
     return calendarData.find((day) => day.date === formattedTarget) || null;
   }, [date, calendarData]);
 
-  // 3. その日の「欠席者」と「遅刻者」を絞り込み
   const absentStudents = React.useMemo(() => {
     if (!selectedDayData || !selectedDayData.attendance) return [];
-
-    // 💡 「as any[]」を「as AttendanceRecord[]」に変更して型を厳格に指定します
     const attendanceList = (
       Array.isArray(selectedDayData.attendance)
         ? selectedDayData.attendance
@@ -105,7 +79,6 @@ export default function Home() {
   const lateStudents = React.useMemo(() => {
     if (!selectedDayData || !selectedDayData.attendance) return [];
 
-    // 💡 こちらも同様に「as AttendanceRecord[]」に変更
     const attendanceList = (
       Array.isArray(selectedDayData.attendance)
         ? selectedDayData.attendance
@@ -114,32 +87,57 @@ export default function Home() {
 
     return attendanceList.filter((a) => a && a.status === 3);
   }, [selectedDayData]);
-  // 4. 今月のイベント一覧を抽出
-  const currentMonthEvents = React.useMemo(() => {
-    if (!date || calendarData.length === 0) return [];
-    const currentYearMonth = format(date, "yyyy-MM");
-    return calendarData.filter(
-      (day) => day.date.startsWith(currentYearMonth) && day.events.length > 0,
-    );
-  }, [date, calendarData]);
+
+  // 💡 行事クリック時のハンドラー
+  const handleEventClick = (evt: EventItem) => {
+    setEditingEvent(evt);
+    setEditTitle(evt.title || "");
+    setEditDetail(evt.detail || "");
+  };
+
+  // 💡 保存処理（仮）
+  const handleSaveEvent = async () => {
+    if (!editingEvent) return;
+
+    // TODO: ここでAPIを叩いてデータを更新する
+    console.log("【保存APIリクエスト想定】", {
+      id: editingEvent.id,
+      title: editTitle,
+      detail: editDetail,
+    });
+
+    // フロントエンドのステートを仮更新（モック動作）
+    if (staffData) {
+      const updatedCalendar = staffData.calendar_data.map((day) => {
+        return {
+          ...day,
+          events: day.events.map((e) =>
+            e.id === editingEvent.id
+              ? { ...e, title: editTitle, detail: editDetail }
+              : e,
+          ),
+        };
+      });
+      setStaffData({ ...staffData, calendar_data: updatedCalendar });
+    }
+
+    // モーダルを閉じる
+    setEditingEvent(null);
+  };
 
   return (
-    <main className="w-full p-6 space-y-6">
+    <main className="w-full p-6 space-y-6 relative">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-        {/* ================= 左半分：スケジュールエリア ================= */}
         <div className="flex flex-col space-y-6">
-          {/* 左上：カレンダー */}
           <div className="bg-white p-5 rounded-xl shadow-sm border">
             <h2 className="text-sm font-bold text-slate-700 mb-3 px-1">
               日付選択
             </h2>
-            {/* 💡 データが取得完了するまでは「読み込み中」でガードして裏での即時fetchを防ぐ */}
             {loading || !staffData ? (
               <div className="h-64 flex items-center justify-center text-sm text-slate-400">
                 読み込み中...
               </div>
             ) : (
-              /* 💡 ご希望通り apiUrl のみを指定する感覚で呼び出し */
               <CalendarSection
                 apiUrl="/api/proxy/staff"
                 staffData={staffData}
@@ -150,34 +148,23 @@ export default function Home() {
           </div>
 
           {/* 左下：イベント一覧カード */}
-          <div className="bg-white p-5 rounded-xl shadow-sm border min-h-[200px]">
+          <div className="bg-white p-5 rounded-xl shadow-sm border min-h-[150px]">
             <h3 className="font-bold text-slate-900 text-base mb-3">
-              今月の行事・予定
+              {date ? `${format(date, "M月d日")} の予定` : "選択した日の予定"}
             </h3>
-            <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
-              {currentMonthEvents.length === 0 ? (
+            <div className="space-y-2">
+              {!selectedDayData || selectedDayData.events.length === 0 ? (
                 <p className="text-sm text-slate-400 italic py-4 text-center">
-                  今月の予定はありません
+                  この日の予定はありません
                 </p>
               ) : (
-                currentMonthEvents.map((day) => (
+                selectedDayData.events.map((evt) => (
                   <div
-                    key={day.id}
-                    className="flex items-start gap-3 p-2 rounded-lg bg-slate-50 border border-slate-100"
+                    key={evt.id}
+                    onClick={() => handleEventClick(evt as EventItem)} 
+                    className="p-3 rounded-lg bg-blue-50/50 border border-blue-100 text-sm font-medium text-slate-800 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer flex justify-between items-center group"
                   >
-                    <span className="inline-block px-2 py-0.5 text-xs font-bold rounded bg-blue-50 text-blue-700 whitespace-nowrap mt-0.5">
-                      {format(parseISO(day.date), "d日(E)", { locale: ja })}
-                    </span>
-                    <div>
-                      {day.events.map((evt) => (
-                        <p
-                          key={evt.id}
-                          className="text-sm font-medium text-slate-800"
-                        >
-                          {evt.title}
-                        </p>
-                      ))}
-                    </div>
+                    <span>{evt.title}</span>
                   </div>
                 ))
               )}
@@ -258,6 +245,77 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* ================= 💡 ヘッダー下いっぱいに広がる行事詳細モーダル ================= */}
+      {editingEvent && (
+        <div className="absolute inset-0 top-0 left-0 w-full h-full bg-slate-900/40 backdrop-blur-sm z-50 rounded-xl overflow-hidden animate-fade-in">
+          <div className="absolute inset-x-0 bottom-0 top-4 bg-white rounded-t-2xl shadow-xl border-t flex flex-col animate-slide-up">
+            {/* モーダルヘッダー */}
+            <div className="px-6 py-4 border-b flex items-center justify-between bg-slate-50 rounded-t-2xl">
+              <div>
+                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                  行事の編集
+                </span>
+                <h3 className="text-base font-bold text-slate-900 mt-1">
+                  {date ? format(date, "M月d日(E)", { locale: ja }) : ""}{" "}
+                  の行事詳細
+                </h3>
+              </div>
+              <button
+                onClick={() => setEditingEvent(null)}
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition-colors"
+              >
+                ✕ 閉じる
+              </button>
+            </div>
+
+            {/* モーダルコンテンツ（入力フォーム） */}
+            <div className="flex-1 p-6 space-y-4 overflow-y-auto">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-600">
+                  行事タイトル
+                </label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  placeholder="例：お誕生日会"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-600">
+                  詳細・メモ
+                </label>
+                <textarea
+                  rows={6}
+                  value={editDetail}
+                  onChange={(e) => setEditDetail(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
+                  placeholder="行事の詳細や持ち物、注意点などを入力してください"
+                />
+              </div>
+            </div>
+
+            {/* モーダル下部（アクションボタン） */}
+            <div className="p-4 border-t bg-slate-50 flex justify-end gap-3">
+              <button
+                onClick={() => setEditingEvent(null)}
+                className="px-4 py-2 border text-sm font-medium text-slate-600 rounded-lg bg-white hover:bg-slate-50 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleSaveEvent}
+                className="px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-colors"
+              >
+                変更を保存する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
