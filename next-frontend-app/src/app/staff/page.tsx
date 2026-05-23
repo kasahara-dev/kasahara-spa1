@@ -1,5 +1,3 @@
-// 📄 @/app/staff/page.tsx
-
 "use client";
 
 import * as React from "react";
@@ -17,6 +15,13 @@ interface EventItem {
   id: string | number;
   title: string;
   detail: string;
+  updated_at: string; // 💡 これを追加！Laravelから届く最終更新日時
+  editor_id: string | number; // 💡 これを追加！誰が編集したかのID
+  editor?: {
+    // 💡 Laravelのリレーションで紐づく編集者情報（最初は存在しないこともあるため ? を推奨）
+    id: string | number;
+    name: string;
+  };
 }
 
 export default function Home() {
@@ -47,6 +52,7 @@ export default function Home() {
         });
         if (!res.ok) throw new Error("データの取得に失敗しました");
         const data: StaffCalendarResponse = await res.json();
+        console.log("🔥 APIから届いた生データ:", data);
         setStaffData(data);
       } catch (error) {
         console.error("スタッフデータ取得エラー:", error);
@@ -161,7 +167,7 @@ export default function Home() {
                 selectedDayData.events.map((evt) => (
                   <div
                     key={evt.id}
-                    onClick={() => handleEventClick(evt as EventItem)} 
+                    onClick={() => handleEventClick(evt as EventItem)}
                     className="p-3 rounded-lg bg-blue-50/50 border border-blue-100 text-sm font-medium text-slate-800 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer flex justify-between items-center group"
                   >
                     <span>{evt.title}</span>
@@ -248,32 +254,24 @@ export default function Home() {
 
       {/* ================= 💡 ヘッダー下いっぱいに広がる行事詳細モーダル ================= */}
       {editingEvent && (
-        <div className="absolute inset-0 top-0 left-0 w-full h-full bg-slate-900/40 backdrop-blur-sm z-50 rounded-xl overflow-hidden animate-fade-in">
-          <div className="absolute inset-x-0 bottom-0 top-4 bg-white rounded-t-2xl shadow-xl border-t flex flex-col animate-slide-up">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+          {/* 💡 変更：最大幅を max-w-lg (約512px) に制限し、真ん中に白い箱を浮かせる */}
+          <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border flex flex-col max-h-[85vh] animate-scale-up overflow-hidden">
             {/* モーダルヘッダー */}
-            <div className="px-6 py-4 border-b flex items-center justify-between bg-slate-50 rounded-t-2xl">
-              <div>
-                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                  行事の編集
-                </span>
-                <h3 className="text-base font-bold text-slate-900 mt-1">
-                  {date ? format(date, "M月d日(E)", { locale: ja }) : ""}{" "}
-                  の行事詳細
-                </h3>
-              </div>
-              <button
-                onClick={() => setEditingEvent(null)}
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition-colors"
-              >
-                ✕ 閉じる
-              </button>
+            <div className="px-6 py-4 border-b text-primary flex items-center bg-slate-50 rounded-t-2xl">
+              <dt className="text-xs font-bold text-slate-500 px-2 py-0.5 rounded">
+                日付
+              </dt>
+              <dd className="text-base font-bold">
+                {date ? format(date, "M月d日(E)", { locale: ja }) : ""}
+              </dd>
             </div>
 
             {/* モーダルコンテンツ（入力フォーム） */}
             <div className="flex-1 p-6 space-y-4 overflow-y-auto">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-600">
-                  行事タイトル
+                  タイトル
                 </label>
                 <input
                   type="text"
@@ -285,9 +283,7 @@ export default function Home() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-600">
-                  詳細・メモ
-                </label>
+                <label className="text-xs font-bold text-slate-600">詳細</label>
                 <textarea
                   rows={6}
                   value={editDetail}
@@ -295,6 +291,25 @@ export default function Home() {
                   className="w-full px-3 py-2 border rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
                   placeholder="行事の詳細や持ち物、注意点などを入力してください"
                 />
+              </div>
+              <div className="pt-3 border-t flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+                <div className="flex items-center gap-1">
+                  <span>最終更新:</span>
+                  <time>
+                    {format(
+                      new Date(editingEvent.updated_at),
+                      "yyyy/MM/dd HH:mm",
+                      { locale: ja },
+                    )}
+                  </time>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span>編集者:</span>
+                  <span className="font-medium text-slate-500">
+                    {editingEvent.editor?.name ||
+                      `スタッフ(ID: ${editingEvent.editor_id})`}
+                  </span>
+                </div>
               </div>
             </div>
 
