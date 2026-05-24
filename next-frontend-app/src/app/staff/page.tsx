@@ -5,23 +5,37 @@ import { format, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useSession } from "next-auth/react";
 import CalendarSection from "@/components/staff/CalendarSection";
+import EventListCard from "@/components/staff/EventListCard";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   StaffCalendarResponse,
   AttendanceRecord,
 } from "@/../../types/calendar";
+import { Button } from "@/components/ui/button";
 
 // 💡 イベント型をローカルで扱いやすいように定義（またはimport元に合わせてください）
 interface EventItem {
   id: string | number;
   title: string;
   detail: string;
-  updated_at: string; // 💡 これを追加！Laravelから届く最終更新日時
-  editor_id: string | number; // 💡 これを追加！誰が編集したかのID
+  calendar_id?: number;
+  updated_at?: string;
+  editor_id?: string | number;
   editor?: {
-    // 💡 Laravelのリレーションで紐づく編集者情報（最初は存在しないこともあるため ? を推奨）
     id: string | number;
     name: string;
   };
+}
+interface BodyData {
+  title: string;
+  detail: string;
+  calendar_id?: number;
 }
 
 export default function Home() {
@@ -52,7 +66,6 @@ export default function Home() {
         });
         if (!res.ok) throw new Error("データの取得に失敗しました");
         const data: StaffCalendarResponse = await res.json();
-        console.log("🔥 APIから届いた生データ:", data);
         setStaffData(data);
       } catch (error) {
         console.error("スタッフデータ取得エラー:", error);
@@ -103,32 +116,75 @@ export default function Home() {
 
   // 💡 保存処理（仮）
   const handleSaveEvent = async () => {
+    
     if (!editingEvent) return;
 
-    // TODO: ここでAPIを叩いてデータを更新する
-    console.log("【保存APIリクエスト想定】", {
-      id: editingEvent.id,
-      title: editTitle,
-      detail: editDetail,
-    });
+    // 💡 新規作成か更新かを見分けるフラグ
+    const isNew = editingEvent.id === 0;
 
-    // フロントエンドのステートを仮更新（モック動作）
-    if (staffData) {
-      const updatedCalendar = staffData.calendar_data.map((day) => {
-        return {
-          ...day,
-          events: day.events.map((e) =>
-            e.id === editingEvent.id
-              ? { ...e, title: editTitle, detail: editDetail }
-              : e,
-          ),
-        };
+    try {
+      // 💡 IDによってURLとメソッドを自動で切り替える
+      const url = isNew
+        ? "/api/proxy/staff/event" // 新規登録のURL
+        : `/api/proxy/staff/event/${editingEvent.id}`; // 更新のURL
+
+      const method = isNew ? "POST" : "PATCH"; // 💡 ルートでPUTにしている場合はここを "PUT" にしてください
+
+      // 💡 新規登録の時は、Laravel側で必須にしている `calendar_id` も一緒に送る必要があります
+      const bodyData: BodyData = {
+        title: editTitle,
+        detail: editDetail,
+      };
+      if (isNew) {
+        bodyData.calendar_id = editingEvent.calendar_id;
+      }
+
+      const res = await fetch(url, {
+        method: method,
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(bodyData),
       });
-      setStaffData({ ...staffData, calendar_data: updatedCalendar });
-    }
 
-    // モーダルを閉じる
-    setEditingEvent(null);
+      if (!res.ok) {
+        if (res.status === 422) {
+          const errorData = await res.json();
+          console.error("❌ バリデーションエラー:", errorData);
+          alert(`保存できませんでした: ${JSON.stringify(errorData.errors)}`);
+          return;
+        }
+        throw new Error("イベントの保存に失敗しました");
+      }
+
+      const resData = await res.json(); // Laravelから最新のeventデータが返ってくる想定
+
+      // 💡 ステート（画面）の更新処理
+      if (staffData && resData.event) {
+        const updatedCalendar = staffData.calendar_data.map((day) => {
+          // 対象の日のカレンダーデータを探す
+          if (day.id === editingEvent.calendar_id) {
+            return {
+              ...day,
+              events: isNew
+                ? [...day.events, resData.event] // 💡 新規なら、配列の末尾に新イベントを追加
+                : day.events.map((e) =>
+                    e.id === editingEvent.id ? resData.event : e,
+                  ), // 更新
+            };
+          }
+          return day;
+        });
+        setStaffData({ ...staffData, calendar_data: updatedCalendar });
+      }
+
+      setEditingEvent(null);
+    } catch (error) {
+      console.error("エラー:", error);
+      alert("保存中にエラーが発生しました。");
+    }
   };
 
   return (
@@ -154,28 +210,17 @@ export default function Home() {
           </div>
 
           {/* 左下：イベント一覧カード */}
-          <div className="bg-white p-5 rounded-xl shadow-sm border min-h-[150px]">
-            <h3 className="font-bold text-slate-900 text-base mb-3">
-              {date ? `${format(date, "M月d日")} の予定` : "選択した日の予定"}
-            </h3>
-            <div className="space-y-2">
-              {!selectedDayData || selectedDayData.events.length === 0 ? (
-                <p className="text-sm text-slate-400 italic py-4 text-center">
-                  この日の予定はありません
-                </p>
-              ) : (
-                selectedDayData.events.map((evt) => (
-                  <div
-                    key={evt.id}
-                    onClick={() => handleEventClick(evt as EventItem)}
-                    className="p-3 rounded-lg bg-blue-50/50 border border-blue-100 text-sm font-medium text-slate-800 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer flex justify-between items-center group"
-                  >
-                    <span>{evt.title}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          <EventListCard
+            date={date}
+            selectedDayData={selectedDayData}
+            onSelectNewEvent={(initialData) => {
+              setEditingEvent(initialData);
+              // 💡 タイトルと詳細はモーダルが自分で初期化するので、ここではセットしなくてOK！
+            }}
+            onEventClick={(evt) => {
+              setEditingEvent(evt);
+            }}
+          />
         </div>
 
         {/* ================= 右半分：出欠確認エリア ================= */}
@@ -252,23 +297,20 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ================= 💡 ヘッダー下いっぱいに広がる行事詳細モーダル ================= */}
+      {/* ================= 行事詳細モーダル ================= */}
       {editingEvent && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          {/* 💡 変更：最大幅を max-w-lg (約512px) に制限し、真ん中に白い箱を浮かせる */}
+          {/* 2. 内側の白い箱：外側がクリックしても反応しなくなったので、
+         e.stopPropagation() も必要なくなります（消してOKです！） */}
           <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border flex flex-col max-h-[85vh] animate-scale-up overflow-hidden">
-            {/* モーダルヘッダー */}
-            <div className="px-6 py-4 border-b text-primary flex items-center bg-slate-50 rounded-t-2xl">
-              <dt className="text-xs font-bold text-slate-500 px-2 py-0.5 rounded">
-                日付
-              </dt>
-              <dd className="text-base font-bold">
-                {date ? format(date, "M月d日(E)", { locale: ja }) : ""}
-              </dd>
+            <div className="px-6 py-4 border-b text-primary flex items-center justify-center bg-slate-50 rounded-t-2xl">
+              <h1 className="text-base font-bold text-primary">
+                {editingEvent.id === 0 ? "新規予定の追加" : "行事詳細"}
+              </h1>
             </div>
-
-            {/* モーダルコンテンツ（入力フォーム） */}
             <div className="flex-1 p-6 space-y-4 overflow-y-auto">
+              <dt className="text-xs font-bold text-slate-600 mb-2">日付</dt>
+              <dt>{date ? format(date, "M月d日(E)", { locale: ja }) : ""}</dt>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-600">
                   タイトル
@@ -292,41 +334,45 @@ export default function Home() {
                   placeholder="行事の詳細や持ち物、注意点などを入力してください"
                 />
               </div>
-              <div className="pt-3 border-t flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
-                <div className="flex items-center gap-1">
-                  <span>最終更新:</span>
-                  <time>
-                    {format(
-                      new Date(editingEvent.updated_at),
-                      "yyyy/MM/dd HH:mm",
-                      { locale: ja },
-                    )}
-                  </time>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span>編集者:</span>
-                  <span className="font-medium text-slate-500">
-                    {editingEvent.editor?.name ||
-                      `スタッフ(ID: ${editingEvent.editor_id})`}
-                  </span>
-                </div>
-              </div>
-            </div>
+              {/* 💡 IDが0じゃない（＝既存のイベント編集の）ときだけ、このフッター情報エリアを丸ごと表示する */}
+              {editingEvent.id !== 0 && (
+                <div className="pt-3 border-t flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+                  {typeof editingEvent.updated_at === "string" && (
+                    <div className="flex items-center gap-1 text-xs text-slate-400">
+                      <span>最終更新:</span>
+                      <time>
+                        {format(
+                          new Date(editingEvent.updated_at),
+                          "yyyy/MM/dd HH:mm",
+                          { locale: ja },
+                        )}
+                      </time>
+                    </div>
+                  )}
 
-            {/* モーダル下部（アクションボタン） */}
+                  <div className="flex items-center gap-1">
+                    <span>編集者:</span>
+                    <span className="font-medium text-slate-500">
+                      {editingEvent.editor?.name ||
+                        `スタッフ(ID: ${editingEvent.editor_id})`}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="p-4 border-t bg-slate-50 flex justify-end gap-3">
-              <button
+              <Button
                 onClick={() => setEditingEvent(null)}
-                className="px-4 py-2 border text-sm font-medium text-slate-600 rounded-lg bg-white hover:bg-slate-50 transition-colors"
+                className="px-4 py-2 border text-primary rounded-lg bg-white"
               >
-                キャンセル
-              </button>
-              <button
+                戻る
+              </Button>
+              <Button
                 onClick={handleSaveEvent}
-                className="px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-colors"
+                className="px-4 py-2 rounded-lg"
               >
-                変更を保存する
-              </button>
+                {editingEvent.id === 0 ? "登録する" : "変更を保存する"}
+              </Button>
             </div>
           </div>
         </div>

@@ -8,6 +8,7 @@ use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Staff\CalendarController as StaffCalendarController;
+use App\Http\Controllers\Staff\EventController as StaffEventController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -15,6 +16,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::middleware('checkRole:staff')->prefix('staff')->group(function () {
         Route::get('/', [StaffCalendarController::class, 'index']);
+        Route::patch('/event/{event_id}', [StaffEventController::class, 'update']);
+        Route::post('/event',[StaffEventController::class,'store']);
     });
     Route::middleware('checkRole:parent')->group(function () {
         Route::get('/', [CalendarController::class, 'index']);

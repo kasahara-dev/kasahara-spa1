@@ -33,3 +33,16 @@ export interface StaffCalendarResponse {
   };
   calendar_data: CalendarDayData[];
 }
+
+export interface EventItem {
+  id: string | number;
+  title: string;
+  detail: string;
+  calendar_id?: number;
+  updated_at?: string;
+  editor_id?: string | number;
+  editor?: {
+    id: string | number;
+    name: string;
+  };
+}
