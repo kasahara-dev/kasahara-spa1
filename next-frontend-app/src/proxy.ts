@@ -15,8 +15,13 @@ export default async function proxy(req: NextRequest) {
     }
     return NextResponse.redirect(new URL("/login", req.url));
   }
+
   if (pathname.startsWith("/staff") && token.role !== "staff") {
     return NextResponse.redirect(new URL("/staff/login", req.url));
+  }
+
+  if (!pathname.startsWith("/staff") && token.role == "staff") {
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 
   return NextResponse.next();

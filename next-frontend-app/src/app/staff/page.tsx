@@ -5,6 +5,7 @@ import { format, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useSession } from "next-auth/react";
 import CalendarSection from "@/components/staff/CalendarSection";
+import { useCalendarData } from "@/hooks/staff/useCalendarData";
 import EventListCard from "@/components/staff/EventListCard";
 import {
   Card,
@@ -215,7 +216,6 @@ export default function Home() {
             selectedDayData={selectedDayData}
             onSelectNewEvent={(initialData) => {
               setEditingEvent(initialData);
-              // 💡 タイトルと詳細はモーダルが自分で初期化するので、ここではセットしなくてOK！
             }}
             onEventClick={(evt) => {
               setEditingEvent(evt);
@@ -286,7 +286,7 @@ export default function Home() {
                         {item.user?.name || "未登録の園児"}
                       </h4>
                     </div>
-                    <p className="text-sm text-slate-600 pl-1">
+                    <p className="text-sm text-slate-600 pl-1 whitespace-pre-wrap">
                       {item.detail || "（理由は入力されていません）"}
                     </p>
                   </div>
@@ -300,8 +300,6 @@ export default function Home() {
       {/* ================= 行事詳細モーダル ================= */}
       {editingEvent && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          {/* 2. 内側の白い箱：外側がクリックしても反応しなくなったので、
-         e.stopPropagation() も必要なくなります（消してOKです！） */}
           <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border flex flex-col max-h-[85vh] animate-scale-up overflow-hidden">
             <div className="px-6 py-4 border-b text-primary flex items-center justify-center bg-slate-50 rounded-t-2xl">
               <h1 className="text-base font-bold text-primary">
@@ -334,7 +332,6 @@ export default function Home() {
                   placeholder="行事の詳細や持ち物、注意点などを入力してください"
                 />
               </div>
-              {/* 💡 IDが0じゃない（＝既存のイベント編集の）ときだけ、このフッター情報エリアを丸ごと表示する */}
               {editingEvent.id !== 0 && (
                 <div className="pt-3 border-t flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
                   {typeof editingEvent.updated_at === "string" && (
