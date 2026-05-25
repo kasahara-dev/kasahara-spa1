@@ -1,26 +1,16 @@
 "use client";
 
 import * as React from "react";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { useSession } from "next-auth/react";
 import CalendarSection from "@/components/staff/CalendarSection";
-import { useCalendarData } from "@/hooks/staff/useCalendarData";
 import EventListCard from "@/components/staff/EventListCard";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  StaffCalendarResponse,
-  AttendanceRecord,
-} from "@/../../types/calendar";
+// 💡 カスタムフックをインポート
+import { useCalendarData } from "@/hooks/staff/useCalendarData";
+import { AttendanceRecord } from "@/../../types/calendar";
 import { Button } from "@/components/ui/button";
-
-// 💡 イベント型をローカルで扱いやすいように定義（またはimport元に合わせてください）
+// 💡 ページ内で使う型
 interface EventItem {
   id: string | number;
   title: string;
@@ -33,57 +23,106 @@ interface EventItem {
     name: string;
   };
 }
-interface BodyData {
-  title: string;
-  detail: string;
-  calendar_id?: number;
-}
 
 export default function Home() {
   const [date, setDate] = React.useState<Date | undefined>(new Date());
-  const [staffData, setStaffData] =
-    React.useState<StaffCalendarResponse | null>(null);
-  const [loading, setLoading] = React.useState<boolean>(true);
   const { data: session } = useSession();
   const token = session?.accessToken;
 
-  // 💡 モーダル管理用のステート
+  // ========================================================
+  // 💡 【大改造ポイント】
+  // 元々あった staffData, loading の useState や useEffect はすべて削除！
+  // 代わりにフックを1行だけ呼び出して、裏からデータを引っ張ってきます。
+  // ========================================================
+  const { staffData, setStaffData, loading, handleSaveEvent } =
+    useCalendarData(token);
+
+  // 💡 モーダル管理用のステート（文字入力の状態はここに残します）
   const [editingEvent, setEditingEvent] = React.useState<EventItem | null>(
     null,
   );
   const [editTitle, setEditTitle] = React.useState("");
   const [editDetail, setEditDetail] = React.useState("");
+  const [formErrors, setFormErrors] = React.useState<Record<string, string[]>>(
+    {},
+  );
+  // 💡 行事クリック時のハンドラー
+  const handleEventClick = (evt: EventItem) => {
+    setEditingEvent(evt);
+    setEditTitle(evt.title || "");
+    setEditDetail(evt.detail || "");
+    setFormErrors({});
+  };
 
-  React.useEffect(() => {
-    if (!token) return;
-    async function fetchAllData() {
-      try {
-        const res = await fetch("/api/proxy/staff", {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (!res.ok) throw new Error("データの取得に失敗しました");
-        const data: StaffCalendarResponse = await res.json();
-        setStaffData(data);
-      } catch (error) {
-        console.error("スタッフデータ取得エラー:", error);
-      } finally {
-        setLoading(false);
+  // 💡 ページ側の保存ボタンが押された時の処理
+  const onSaveClick = async () => {
+    if (!editingEvent) return;
+
+    try {
+      setFormErrors({}); // 前のエラーをクリア
+
+      // フックから生の response を受け取る
+      const response = await handleSaveEvent({
+        editingEvent: editingEvent,
+        title: editTitle,
+        detail: editDetail, // 👈 いま画面に入力されている文字
+      });
+
+      // 💡 1. 成功時（Laravel側の設計に合わせて 200 または 201）
+      if (response.status === 200 || response.status === 201) {
+        const resData = await response.json();
+
+        // 画面のイベント一覧を更新する処理（元々あったもの）
+        if (staffData && resData.event) {
+          const updatedCalendar = staffData.calendar_data.map((day) => {
+            if (day.id === editingEvent.calendar_id) {
+              return {
+                ...day,
+                events:
+                  editingEvent.id === 0
+                    ? [...day.events, resData.event]
+                    : day.events.map((e) =>
+                        e.id === editingEvent.id ? resData.event : e,
+                      ),
+              };
+            }
+            return day;
+          });
+          setStaffData({ ...staffData, calendar_data: updatedCalendar }); // 👈 フックからsetStaffDataを貰っておく
+        }
+
+        setEditingEvent(null); // モーダルを閉じる
+        return;
       }
+
+      // 💡 2. バリデーションエラー時（保護者側と全く同じ！）
+      if (response.status === 422) {
+        const errorData = await response.json();
+        setFormErrors(errorData.errors || {});
+        return;
+      }
+
+      // それ以外のステータス（500など）はエラーへ飛ばす
+      throw new Error();
+    } catch (error) {
+      console.error("送信エラー:", error);
+      setFormErrors({
+        global: ["保存に失敗しました。時間を置いて再度お試しください。"],
+      });
     }
-    fetchAllData();
-  }, [token]);
+  };
 
-  const calendarData = staffData?.calendar_data ?? [];
-
+  // ========================================================
+  // 💡 データ集計用のロジック（ここはフックから届いた staffData を使って自動計算されます）
+  // ========================================================
   const selectedDayData = React.useMemo(() => {
+    // 💡 中に引っ越しさせ、外側の変数ではなく staffData を直接見に行くようにする
+    const calendarData = staffData?.calendar_data ?? [];
+
     if (!date || calendarData.length === 0) return null;
     const formattedTarget = format(date, "yyyy-MM-dd");
     return calendarData.find((day) => day.date === formattedTarget) || null;
-  }, [date, calendarData]);
+  }, [date, staffData]);
 
   const absentStudents = React.useMemo(() => {
     if (!selectedDayData || !selectedDayData.attendance) return [];
@@ -92,106 +131,24 @@ export default function Home() {
         ? selectedDayData.attendance
         : Object.values(selectedDayData.attendance)
     ) as AttendanceRecord[];
-
     return attendanceList.filter((a) => a && a.status === 2);
   }, [selectedDayData]);
 
   const lateStudents = React.useMemo(() => {
     if (!selectedDayData || !selectedDayData.attendance) return [];
-
     const attendanceList = (
       Array.isArray(selectedDayData.attendance)
         ? selectedDayData.attendance
         : Object.values(selectedDayData.attendance)
     ) as AttendanceRecord[];
-
     return attendanceList.filter((a) => a && a.status === 3);
   }, [selectedDayData]);
-
-  // 💡 行事クリック時のハンドラー
-  const handleEventClick = (evt: EventItem) => {
-    setEditingEvent(evt);
-    setEditTitle(evt.title || "");
-    setEditDetail(evt.detail || "");
-  };
-
-  // 💡 保存処理（仮）
-  const handleSaveEvent = async () => {
-    
-    if (!editingEvent) return;
-
-    // 💡 新規作成か更新かを見分けるフラグ
-    const isNew = editingEvent.id === 0;
-
-    try {
-      // 💡 IDによってURLとメソッドを自動で切り替える
-      const url = isNew
-        ? "/api/proxy/staff/event" // 新規登録のURL
-        : `/api/proxy/staff/event/${editingEvent.id}`; // 更新のURL
-
-      const method = isNew ? "POST" : "PATCH"; // 💡 ルートでPUTにしている場合はここを "PUT" にしてください
-
-      // 💡 新規登録の時は、Laravel側で必須にしている `calendar_id` も一緒に送る必要があります
-      const bodyData: BodyData = {
-        title: editTitle,
-        detail: editDetail,
-      };
-      if (isNew) {
-        bodyData.calendar_id = editingEvent.calendar_id;
-      }
-
-      const res = await fetch(url, {
-        method: method,
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(bodyData),
-      });
-
-      if (!res.ok) {
-        if (res.status === 422) {
-          const errorData = await res.json();
-          console.error("❌ バリデーションエラー:", errorData);
-          alert(`保存できませんでした: ${JSON.stringify(errorData.errors)}`);
-          return;
-        }
-        throw new Error("イベントの保存に失敗しました");
-      }
-
-      const resData = await res.json(); // Laravelから最新のeventデータが返ってくる想定
-
-      // 💡 ステート（画面）の更新処理
-      if (staffData && resData.event) {
-        const updatedCalendar = staffData.calendar_data.map((day) => {
-          // 対象の日のカレンダーデータを探す
-          if (day.id === editingEvent.calendar_id) {
-            return {
-              ...day,
-              events: isNew
-                ? [...day.events, resData.event] // 💡 新規なら、配列の末尾に新イベントを追加
-                : day.events.map((e) =>
-                    e.id === editingEvent.id ? resData.event : e,
-                  ), // 更新
-            };
-          }
-          return day;
-        });
-        setStaffData({ ...staffData, calendar_data: updatedCalendar });
-      }
-
-      setEditingEvent(null);
-    } catch (error) {
-      console.error("エラー:", error);
-      alert("保存中にエラーが発生しました。");
-    }
-  };
 
   return (
     <main className="w-full p-6 space-y-6 relative">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         <div className="flex flex-col space-y-6">
+          {/* 日付選択 */}
           <div className="bg-white p-5 rounded-xl shadow-sm border">
             <h2 className="text-sm font-bold text-slate-700 mb-3 px-1">
               日付選択
@@ -210,16 +167,17 @@ export default function Home() {
             )}
           </div>
 
-          {/* 左下：イベント一覧カード */}
+          {/* 💡 イベント一覧カード（Propsを渡す） */}
           <EventListCard
             date={date}
             selectedDayData={selectedDayData}
             onSelectNewEvent={(initialData) => {
+              setFormErrors({});
               setEditingEvent(initialData);
+              setEditTitle("");
+              setEditDetail("");
             }}
-            onEventClick={(evt) => {
-              setEditingEvent(evt);
-            }}
+            onEventClick={(evt) => handleEventClick(evt as EventItem)}
           />
         </div>
 
@@ -234,7 +192,6 @@ export default function Home() {
                 理由の確認と承認を行います
               </p>
             </div>
-
             <div className="flex gap-2">
               <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-700 border border-red-100">
                 欠席: {absentStudents.length} 名
@@ -272,7 +229,6 @@ export default function Home() {
                     </p>
                   </div>
                 ))}
-
                 {lateStudents.map((item) => (
                   <div
                     key={item.id}
@@ -317,20 +273,40 @@ export default function Home() {
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full px-3 py-2 border rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   placeholder="例：お誕生日会"
                 />
+                {formErrors.title?.map((msg, i) => (
+                  <p
+                    key={i}
+                    className="text-xs font-semibold text-red-500 mt-1 pl-1"
+                  >
+                    {msg}
+                  </p>
+                ))}
               </div>
-
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-600">詳細</label>
                 <textarea
                   rows={6}
                   value={editDetail}
                   onChange={(e) => setEditDetail(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
+                  className="w-full px-3 py-2 border rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
                   placeholder="行事の詳細や持ち物、注意点などを入力してください"
                 />
+                {formErrors.detail?.map((msg, i) => (
+                  <p
+                    key={i}
+                    className="text-xs font-semibold text-red-500 mt-1 pl-1"
+                  >
+                    {msg}
+                  </p>
+                ))}
+                {formErrors.calendar_id && (
+                  <p className="text-xs font-semibold text-red-500 bg-red-50 p-2 rounded-lg border border-red-100">
+                    日付データが正しく選択されていません。再度お試しください。
+                  </p>
+                )}
               </div>
               {editingEvent.id !== 0 && (
                 <div className="pt-3 border-t flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
@@ -346,7 +322,6 @@ export default function Home() {
                       </time>
                     </div>
                   )}
-
                   <div className="flex items-center gap-1">
                     <span>編集者:</span>
                     <span className="font-medium text-slate-500">
@@ -364,10 +339,8 @@ export default function Home() {
               >
                 戻る
               </Button>
-              <Button
-                onClick={handleSaveEvent}
-                className="px-4 py-2 rounded-lg"
-              >
+              {/* 💡 修正した関数の呼び出し */}
+              <Button onClick={onSaveClick} className="px-4 py-2 rounded-lg">
                 {editingEvent.id === 0 ? "登録する" : "変更を保存する"}
               </Button>
             </div>

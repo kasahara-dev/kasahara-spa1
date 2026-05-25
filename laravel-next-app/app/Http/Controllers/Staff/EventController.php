@@ -30,8 +30,7 @@ class EventController extends Controller
     public function store(EventRequest $request)
     {
         $validated = $request->validated();
-        $event = Event::findOrFail($event_id);
-        $event=Event::create([
+        $event = Event::create([
             'calendar_id' => $validated['calendar_id'],
             'title' => $validated['title'],
             'detail'  => $validated['detail'],

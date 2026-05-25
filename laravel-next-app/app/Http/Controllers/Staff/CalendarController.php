@@ -16,8 +16,6 @@ class CalendarController extends Controller
         'start_date' => config('app_settings.start_date'),
         'end_date'   => config('app_settings.end_date'),
     ];
-
-    // 💡 'events' を 'events.editor:id,name' に変更します
     $calendarData = Calendar::with(['events.editor:id,name', 'attendance.user'])
         ->whereBetween('date', [$config['start_date'], $config['end_date']])
         ->orderBy('date', 'asc')
