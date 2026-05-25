@@ -22,7 +22,7 @@ class CalendarController extends Controller
 
         $calendarData = Calendar::with([
             'events',
-            'attendance' => function ($query) use ($userId) {
+            'attendances' => function ($query) use ($userId) {
                 $query->where('user_id', $userId);
             }
         ])

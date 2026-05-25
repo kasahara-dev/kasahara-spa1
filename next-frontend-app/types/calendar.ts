@@ -11,10 +11,13 @@ export interface UserInfo {
 
 export interface AttendanceRecord {
   id: number;
-  status: number; // 2: 欠席, 3: 遅刻
+  status: number;
   detail: string | null;
   user_id: number;
   user?: UserInfo;
+  updated_at?: string;
+  editor_id?: number;
+  editor?: { id: string | number; name: string };
 }
 
 export interface CalendarDayData {
@@ -22,10 +25,9 @@ export interface CalendarDayData {
   date: string;
   working: number;
   events: CalendarEvent[];
-  attendance: AttendanceRecord[];
+  attendances: AttendanceRecord[];
 }
 
-// Laravelの StaffCalendarController から返ってくる全体の型
 export interface StaffCalendarResponse {
   config: {
     start_date: string;
@@ -41,8 +43,15 @@ export interface EventItem {
   calendar_id?: number;
   updated_at?: string;
   editor_id?: string | number;
-  editor?: {
-    id: string | number;
-    name: string;
-  };
+  editor?: { id: string | number; name: string };
+}
+
+export interface AttendanceItem {
+  id: string | number;
+  status: number;
+  detail: string;
+  calendar_id?: number;
+  updated_at?: string;
+  editor_id?: string | number;
+  editor?: { id: string | number; name: string };
 }

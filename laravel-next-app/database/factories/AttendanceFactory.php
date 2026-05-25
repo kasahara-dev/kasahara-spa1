@@ -32,11 +32,18 @@ class AttendanceFactory extends Factory
         }else{
             $delete = null;
         }
+        $rand = rand(1,100);
+        if($rand < 50){
+            $randEditor = User::where('role','staff')->inRandomOrder()->first()->id;
+        }else{
+            $randEditor = null;
+        }
         return [
             'calendar_id' => null,
             'user_id' => null,
             'status' => $randStatus,
             'detail' => $detail,
+            'editor_id' => $randEditor,
             'deleted_at' => $delete,
         ];
     }
