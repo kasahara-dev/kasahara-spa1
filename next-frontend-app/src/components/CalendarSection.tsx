@@ -12,6 +12,9 @@ interface CalendarEvent {
   title: string;
   detail?: string | null;
 }
+
+// 💡 ユーザーは1日1つしか持たないので、データ構造を「単数形」として扱えるように
+// APIの生データ（attendances配列）を内包した型定義にします
 interface CalendarApiResponse {
   config: { start_date: string; end_date: string; deadline_time: string };
   calendar_data: Array<{
@@ -19,13 +22,14 @@ interface CalendarApiResponse {
     date: string;
     working: number;
     events: CalendarEvent[];
-    attendance?: {
+    // APIから届く生の配列（※中身は最大1件）
+    attendances?: Array<{
       id: number;
       status: number;
       user_id: number;
       calendar_id: number;
       detail?: string | null;
-    } | null;
+    }> | null;
   }>;
 }
 
@@ -91,8 +95,11 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
     const dayData = data.calendar_data.find(
       (item) => item.date === targetDateStr,
     );
-    const calendarId = dayData?.id || dayData?.attendance?.calendar_id;
-    const hasExistingAttendance = !!dayData?.attendance;
+
+    // 💡 配列の0番目（あったら1つだけ）を「その日の出欠」として安全に特定
+    const existingAttendance = dayData?.attendances?.[0];
+    const calendarId = dayData?.id || existingAttendance?.calendar_id;
+    const hasExistingAttendance = !!existingAttendance;
 
     const baseUrl = apiUrl.endsWith("/")
       ? `${apiUrl}attendance`
@@ -189,9 +196,18 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
     .map((item) => parseISO(item.date));
   const minDate = parseISO(data.config.start_date);
   const maxDate = parseISO(data.config.end_date);
-  const selectedDayData = data.calendar_data.find(
+
+  // 💡 ユーザーが言う通り、本質は「持っていない場合（null）もある単数形（attendance?）」！
+  // 配列の歪みをここで吸収し、モーダルには綺麗なオブジェクト型にして渡します。
+  const rawDayData = data.calendar_data.find(
     (item) => item.date === (date ? format(date, "yyyy-MM-dd") : ""),
   );
+  const selectedDayData = rawDayData
+    ? {
+        ...rawDayData,
+        attendance: rawDayData.attendances?.[0] || null,
+      }
+    : undefined;
 
   return (
     <>
@@ -211,18 +227,19 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
           hasEvent: data.calendar_data
             .filter((d) => d.events && d.events.length > 0)
             .map((d) => parseISO(d.date)),
+          // 💡 オプショナルチェイニング `?.` を駆使して、データを持たない日（配列がない・空）でも絶対にクラッシュしない安全なフィルター！
           absent: data.calendar_data
-            .filter((d) => d.attendance?.status === 1)
+            .filter((d) => d.attendances && d.attendances?.[0]?.status === 1)
             .map((d) => parseISO(d.date)),
           late: data.calendar_data
-            .filter((d) => d.attendance?.status === 2)
+            .filter((d) => d.attendances && d.attendances?.[0]?.status === 2)
             .map((d) => parseISO(d.date)),
         }}
         modifiersClassNames={{
           closed: "text-red-500 font-bold",
           absent:
-            "relative before:content-['×'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-[28px] before:text-red-500 before:pointer-events-none before:font-bold",
-          late: "relative before:content-['△'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-[28px] before:text-red-500 before:pointer-events-none before:font-bold",
+            "relative isolate z-10 before:content-['×'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-[28px] before:text-red-500 before:pointer-events-none before:font-bold",
+          late: "relative isolate z-10 before:content-['△'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-[28px] before:text-red-500 before:pointer-events-none before:font-bold",
           hasEvent:
             "relative after:content-[''] after:absolute after:bottom-1 md:after:bottom-3 after:left-1/2 after:-translate-x-1/2 after:w-2 after:h-2 after:bg-primary after:rounded-full aria-selected:after:bg-primary-foreground",
         }}

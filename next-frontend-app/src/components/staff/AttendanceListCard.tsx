@@ -4,7 +4,8 @@ import * as React from "react";
 import { format } from "date-fns";
 import { AttendanceRecord } from "@/../../types/calendar";
 import { Button } from "@/components/ui/button";
-import {Card,CardContent,CardDescription,CardHeader,CardTitle,} from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/components/ui/card"
+import { ja } from "date-fns/locale";
 
 interface AttendanceListCardProps {
   date: Date | undefined;
@@ -23,13 +24,17 @@ export default function AttendanceListCard({
     <Card className="min-h-[580px] flex flex-col bg-white">
       <CardHeader className="pb-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2 space-y-0">
         <div className="space-y-1.5">
-          <CardTitle className="text-primary font-bold">欠席等連絡</CardTitle>
+          <CardTitle className="text-base font-bold text-primary">
+            {date
+              ? `${format(date, "M月d日(E)", { locale: ja })} 欠席等連絡`
+              : "欠席等連絡"}
+          </CardTitle>
           <div className="flex gap-2">
             <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-700 border border-red-100">
-              欠席: {absentStudents.length} 名
+              お休み: {absentStudents.length} 名
             </span>
             <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100">
-              遅刻その他: {lateStudents.length} 名
+              その他: {lateStudents.length} 名
             </span>
           </div>
         </div>
@@ -53,10 +58,10 @@ export default function AttendanceListCard({
               >
                 <div className="flex items-center gap-2">
                   <span className="px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700">
-                    欠席
+                    お休み
                   </span>
                   <h4 className="text-sm font-bold text-slate-800">
-                    {item.user?.name || "未登録の園児"}
+                    {item.user.name}
                   </h4>
                 </div>
               </div>
@@ -69,10 +74,10 @@ export default function AttendanceListCard({
               >
                 <div className="flex items-center gap-2">
                   <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-700">
-                    遅刻
+                    その他
                   </span>
                   <h4 className="text-sm font-bold text-slate-800">
-                    {item.user?.name || "未登録の園児"}
+                    {item.user.name}
                   </h4>
                 </div>
                 <p className="text-sm text-slate-600 pl-1 whitespace-pre-wrap">

@@ -4,15 +4,40 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Attendance;
+use App\Models\Calendar;
+use Carbon\Carbon;
 use App\Http\Requests\AttendanceRequest;
 
 class AttendanceController extends Controller
 {
+    private function isPastDeadline($calendarId){
+        $calendar = Calendar::find($calendarId);
+        if(!$calendar){
+            return false;
+        }
+        $targetDate = Carbon::parse($calendar->date)->startOfDay();
+        $today = Carbon::today();
+        if($targetDate->isAfter($today)){
+            return false;
+        }
+        if($targetDate->isBefore($today)){
+            return true;
+        }
+        $deadlineTimeStr = config('app_settings.deadline_time');
+        $deadline = Carbon::createFromTimeString($deadlineTimeStr);
+        if(Carbon::now()->isAfter($deadline)){
+            return true;
+        }
+        return false;
+    }
     public function store(AttendanceRequest $request)
     {
         $validated = $request->validated();
         $userId = auth()->id();
         $calendarId = $validated['calendar_id'];
+        if($this->isPastDeadline($calendarId)){
+            return response()->json(['message' => 'アプリでの登録可能時刻を過ぎています。直接園にお電話ください。']);
+        }
         $attendance = Attendance::withTrashed()
             ->where('user_id', $userId)
             ->where('calendar_id', $calendarId)
@@ -40,6 +65,9 @@ class AttendanceController extends Controller
             'detail' => 'required_if:status,2|nullable|string|max:1000',
         ]);
         $userId = auth()->id();
+        if($this->isPastDeadline($calendarId)){
+            return response()->json(['message' => 'アプリでの登録可能時刻を過ぎています。直接園にお電話ください。']);
+        }
         $attendance = Attendance::where('user_id', $userId)
             ->where('calendar_id', $calendarId)
             ->first();
@@ -57,9 +85,11 @@ class AttendanceController extends Controller
         $attendance = Attendance::where('user_id', $userId)
             ->where('calendar_id', $calendarId)
             ->first();
-
         if (!$attendance) {
             return response()->json(['message' => 'すでに出席状態です']);
+        }
+        if($this->isPastDeadline($calendarId)){
+            return response()->json(['message' => 'アプリでの登録可能時刻を過ぎています。直接園にお電話ください。']);
         }
         $attendance->delete();
         return response()->json(['message' => '出席に変更しました']);

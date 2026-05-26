@@ -5,10 +5,9 @@ import { X } from "lucide-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Card, CardContent } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+// 💡 古い RadioGroup 関連や Input のインポートを削り、共通コンポーネントをインポート
+import AttendanceStatusSelector from "@/components/AttendanceStatusSelector";
 
 const isPastDeadline = (
   targetDateStr: string,
@@ -116,55 +115,17 @@ export function AttendanceModal({
           </h3>
           <Card className="overflow-hidden shadow-sm">
             <CardContent className="px-5 space-y-5">
-              <RadioGroup
-                value={String(formStatus)}
-                onValueChange={(value) => {
-                  const nextStatus = Number(value);
-                  setFormStatus(nextStatus);
-                  if (nextStatus !== 2) setFormDetail("");
-                }}
-                className="flex flex-wrap items-center gap-6"
+              {/* 💡 【修正点1】detail と onDetailChange、そしてユニークな name をしっかり渡します */}
+              <AttendanceStatusSelector
+                value={formStatus}
+                onChange={setFormStatus}
+                detail={formDetail}
+                onDetailChange={setFormDetail}
                 disabled={isExpired || isSaving}
-              >
-                {[
-                  { label: "出席", value: 0 },
-                  { label: "欠席", value: 1 },
-                  { label: "遅刻その他", value: 2 },
-                ].map((item) => (
-                  <div key={item.value} className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      value={String(item.value)}
-                      id={`status-${item.value}`}
-                      disabled={isExpired || isSaving}
-                    />
-                    <Label
-                      htmlFor={`status-${item.value}`}
-                      className={`font-medium text-sm ${isExpired || isSaving ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer"}`}
-                    >
-                      {item.label}
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
+                name={`parent-modal-${dayData?.id ?? "new"}`}
+              />
 
-              {formStatus === 2 && (
-                <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
-                  <Label className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-                    詳細を入力してください
-                    <span className="text-red-500 font-bold bg-red-50 dark:bg-red-950/40 px-1.5 py-0.5 rounded text-[10px]">
-                      必須
-                    </span>
-                  </Label>
-                  <Input
-                    type="text"
-                    value={formDetail}
-                    onChange={(e) => setFormDetail(e.target.value)}
-                    placeholder="通院のため、10時ごろ登園します"
-                    disabled={isExpired || isSaving}
-                    className="w-full"
-                  />
-                </div>
-              )}
+              {/* 💡 【修正点2】古い {formStatus === 2 && ( ... )} の入力エリアの塊は、共通部品の中に引っ越したので丸ごと削除しました！ */}
 
               <div className="pt-2 space-y-3">
                 <Button

@@ -16,7 +16,12 @@ class CalendarController extends Controller
         'start_date' => config('app_settings.start_date'),
         'end_date'   => config('app_settings.end_date'),
     ];
-    $calendarData = Calendar::with(['events.editor:id,name', 'attendances.user'])
+    $calendarData = Calendar::with([
+        'events.editor:id,name',
+        'attendances.user.groups' => function($query){
+            $query->where('category','!=',0)->select('groups.id','groups.name');
+        },
+        'attendances.editor:id,name'])
         ->whereBetween('date', [$config['start_date'], $config['end_date']])
         ->orderBy('date', 'asc')
         ->get();

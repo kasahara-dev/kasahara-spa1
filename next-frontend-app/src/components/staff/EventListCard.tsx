@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EventItem, CalendarDayData } from "@/../../types/calendar";
+import { ja } from "date-fns/locale";
 
 interface EventListCardProps {
   date: Date | undefined;
@@ -22,7 +23,7 @@ export default function EventListCard({
     <Card className="min-h-[150px]">
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-base font-bold text-primary">
-          {date ? `${format(date, "M月d日")} の予定` : "選択した日の予定"}
+          {date ? `${format(date, "M月d日(E)", {locale: ja})} 予定` : "選択した日の予定"}
         </CardTitle>
         <Button
           onClick={() => {

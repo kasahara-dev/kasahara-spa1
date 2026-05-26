@@ -5,8 +5,11 @@ export interface CalendarEvent {
 }
 
 export interface UserInfo {
-  id: number;
   name: string;
+  groups?: Array<{
+    id: number;
+    name: string;
+  }>
 }
 
 export interface AttendanceRecord {
@@ -14,9 +17,9 @@ export interface AttendanceRecord {
   status: number;
   detail: string | null;
   user_id: number;
-  user?: UserInfo;
-  updated_at?: string;
-  editor_id?: number;
+  user: UserInfo;
+  updated_at: string;
+  editor_id: number | null;
   editor?: { id: string | number; name: string };
 }
 
