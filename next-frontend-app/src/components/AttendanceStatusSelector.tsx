@@ -20,7 +20,7 @@ const statusOptions = [
       "[&:has(:checked)]:border-blue-500 [&:has(:checked)]:bg-blue-50/20 text-slate-700",
   },
   {
-    label: "欠席",
+    label: "お休み",
     value: ATTENDANCE_STATUS.ABSENT,
     activeClass:
       "[&:has(:checked)]:border-red-500 [&:has(:checked)]:bg-red-50/20 text-red-700",

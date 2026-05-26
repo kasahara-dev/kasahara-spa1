@@ -253,7 +253,10 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
           isSaving={isSaving}
           submitMessage={submitMessage}
           submitMessageType={submitMessageType}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => {
+            setIsModalOpen(false);
+            setDate(undefined);
+          }}
           onSave={handleSaveAttendance}
         />
       )}

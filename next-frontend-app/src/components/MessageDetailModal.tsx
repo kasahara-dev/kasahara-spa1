@@ -62,7 +62,7 @@ export default function MessageDetailModal({
 
       <div className="px-6 max-w-2xl mx-auto pb-20">
         <Card className="shadow-sm border-muted">
-          <div className="flex justify-end mx-4 mt-4">
+          <div className="flex justify-end mx-4">
             <button
               onClick={onClose}
               className="w-8 h-8 flex items-center justify-center rounded-full bg-muted/60 text-muted-foreground hover:bg-muted transition-colors"

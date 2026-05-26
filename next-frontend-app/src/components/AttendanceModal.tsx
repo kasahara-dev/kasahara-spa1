@@ -6,7 +6,6 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-// 💡 古い RadioGroup 関連や Input のインポートを削り、共通コンポーネントをインポート
 import AttendanceStatusSelector from "@/components/AttendanceStatusSelector";
 
 const isPastDeadline = (
