@@ -17,7 +17,7 @@ export default function Home() {
   const { data: session } = useSession();
   const token = session?.accessToken;
 
-  const { staffData, setStaffData, loading, handleSaveEvent } =
+  const { staffData, setStaffData, loading, handleSaveEvent,handleSaveAttendance } =
     useCalendarData(token);
 
   const [editingEvent, setEditingEvent] = React.useState<EventItem | null>(
@@ -29,6 +29,7 @@ export default function Home() {
     {},
   );
   const [selectedAttendance, setSelectedAttendance] = React.useState<AttendanceRecord | null>(null);
+  const [attendanceErrors, setAttendanceErrors] = React.useState<Record<string, string[]>>({});
 
   const handleEventClick = (evt: EventItem) => {
     setEditingEvent(evt);
@@ -37,7 +38,7 @@ export default function Home() {
     setFormErrors({});
   };
 
-  const onSaveClick = async () => {
+  const onEventSaveClick = async () => {
     if (!editingEvent) return;
     try {
       setFormErrors({});
@@ -116,7 +117,7 @@ export default function Home() {
     <main className="w-full p-6 space-y-6 relative">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         <div className="flex flex-col space-y-6">
-          <div className="bg-white p-5 rounded-xl shadow-sm border">
+          <div className="bg-white p-5  rounded-xl shadow-sm border">
             <h2 className="text-primary font-bold px-2">日付選択</h2>
             {loading || !staffData ? (
               <div className="h-64 flex items-center justify-center text-sm text-slate-400">
@@ -161,17 +162,46 @@ export default function Home() {
           setEditTitle={setEditTitle}
           setEditDetail={setEditDetail}
           onClose={() => setEditingEvent(null)}
-          onSave={onSaveClick}
+          onSave={onEventSaveClick}
         />
       )}
       {selectedAttendance && (
         <AttendanceEditModal
           attendance={selectedAttendance}
           date={date}
-          onClose={() => setSelectedAttendance(null)}
-          onSave={(updatedData) => {
-            console.log("保存されたデータ:", updatedData);
+          formErrors={attendanceErrors}
+          onClose={() => {
             setSelectedAttendance(null);
+            setAttendanceErrors({}); // 💡 閉じるときはエラーをきれいに掃除する
+          }}
+          onSave={async (updatedData) => {
+            try {
+              setAttendanceErrors({});
+              const payload = { ...selectedAttendance, ...updatedData };
+
+              const response = await handleSaveAttendance(payload);
+
+              // 💡 成功したらモーダルを閉じるだけでOK！
+              // useCalendarDataの内部で勝手に fetchAllData() が走って画面が最新になります
+              if (response && response.ok) {
+                setSelectedAttendance(null);
+                return;
+              }
+
+              if (response?.status === 422) {
+                const errorJson = await response.json();
+                const errorMsg =
+                  errorJson.message ||
+                  "入力内容に不備があります。確認してください。";
+                setAttendanceErrors({ global: [errorMsg] });
+                return;
+              }
+
+              setAttendanceErrors({ global: ["保存に失敗しました。"] });
+            } catch (error) {
+              console.error("出欠保存エラー:", error);
+              setAttendanceErrors({ global: ["通信に失敗しました。"] });
+            }
           }}
         />
       )}

@@ -74,7 +74,7 @@ export function AttendanceModal({
   let statusColor = "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30";
   if (attendance) {
     if (attendance.status === 1) {
-      statusText = "欠席";
+      statusText = "お休み";
       statusColor = "text-red-600 bg-red-50 dark:bg-red-950/30";
     } else if (attendance.status === 2) {
       statusText = "遅刻その他";
@@ -114,7 +114,6 @@ export function AttendanceModal({
           </h3>
           <Card className="overflow-hidden shadow-sm">
             <CardContent className="px-5 space-y-5">
-              {/* 💡 【修正点1】detail と onDetailChange、そしてユニークな name をしっかり渡します */}
               <AttendanceStatusSelector
                 value={formStatus}
                 onChange={setFormStatus}
@@ -123,9 +122,6 @@ export function AttendanceModal({
                 disabled={isExpired || isSaving}
                 name={`parent-modal-${dayData?.id ?? "new"}`}
               />
-
-              {/* 💡 【修正点2】古い {formStatus === 2 && ( ... )} の入力エリアの塊は、共通部品の中に引っ越したので丸ごと削除しました！ */}
-
               <div className="pt-2 space-y-3">
                 <Button
                   type="button"

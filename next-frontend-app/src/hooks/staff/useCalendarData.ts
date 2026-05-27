@@ -1,52 +1,57 @@
 "use client";
 
 import * as React from "react";
-// 💡 大元の EventItem 型をインポートする
-import { StaffCalendarResponse, EventItem } from "@/../../types/calendar";
+import {
+  StaffCalendarResponse,
+  EventItem,
+  AttendanceRecord,
+} from "@/../../types/calendar";
 
 export function useCalendarData(token: string | undefined) {
   const [staffData, setStaffData] =
     React.useState<StaffCalendarResponse | null>(null);
-  const [loading, setLoading] = React.useState<boolean>(true);
 
-  // （useEffect部分は省略、元のままでOKです）
- React.useEffect(() => {
-    if (!token) {
-      // 💡 直呼びを禁止されたので、setTimeoutで一瞬だけ（0秒）未来にずらして実行します。
-      // これで「同期的な呼び出し」ではなくなり、エラーが綺麗に消えます！
-      setTimeout(() => {
-        setLoading(false);
-      }, 0);
-      return;
-    }
+  // 💡 状態は引き続きシンプルに派生させます
+  const loading = !!token && !staffData;
 
-    async function fetchAllData() {
-      try {
-        const res = await fetch("/api/proxy/staff", {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+  // 💡 データの取得関数
+  const fetchAllData = React.useCallback(async () => {
+    if (!token) return;
 
-        if (!res.ok) {
-          throw new Error("データの取得に失敗しました");
-        }
+    try {
+      const res = await fetch("/api/proxy/staff", {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-        const data: StaffCalendarResponse = await res.json();
-        setStaffData(data);
-      } catch (error) {
-        console.error("スタッフデータ取得エラー:", error);
-      } finally {
-        setLoading(false);
+      if (!res.ok) {
+        throw new Error("データの取得に失敗しました");
       }
+
+      const data: StaffCalendarResponse = await res.json();
+      setStaffData(data);
+    } catch (error) {
+      console.error("スタッフデータ取得エラー:", error);
     }
-
-    fetchAllData();
   }, [token]);
+  React.useEffect(() => {
+    if (!token) return;
+    Promise.resolve().then(() => {
+      void fetchAllData();
+    });
 
-  // 💡 1. 「editingEvent: any」を「editingEvent: EventItem」にする
+    const intervalId = setInterval(() => {
+      void fetchAllData();
+    }, 60000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [token, fetchAllData]);
+
   const handleSaveEvent = async ({
     editingEvent,
     title,
@@ -70,11 +75,9 @@ export function useCalendarData(token: string | undefined) {
       title: title,
       detail: detail,
     };
-
     if (isNew) {
       bodyData.calendar_id = editingEvent.calendar_id;
     }
-
     const res = await fetch(url, {
       method: method,
       headers: {
@@ -84,9 +87,51 @@ export function useCalendarData(token: string | undefined) {
       },
       body: JSON.stringify(bodyData),
     });
-
     return res;
   };
 
-  return { staffData, setStaffData, loading, handleSaveEvent };
+  const handleSaveAttendance = async (
+    updatedData: AttendanceRecord & {
+      status: number;
+      detail: string | null;
+      user_id?: number | string;
+      calendar_id?: number | string;
+    },
+  ) => {
+    if (!token) return;
+
+    const isDelete = updatedData.status === 0;
+    const url = `/api/proxy/staff/attendance/${updatedData.id}`;
+    const method = isDelete ? "DELETE" : "PATCH";
+
+    const res = await fetch(url, {
+      method: method,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: isDelete
+        ? null
+        : JSON.stringify({
+            status: updatedData.status,
+            detail: updatedData.detail,
+            user_id: updatedData.user_id,
+            calendar_id: updatedData.calendar_id,
+          }),
+    });
+
+    if (res.ok) {
+      void fetchAllData();
+    }
+    return res;
+  };
+
+  return {
+    staffData,
+    setStaffData,
+    loading,
+    handleSaveEvent,
+    handleSaveAttendance,
+  };
 }

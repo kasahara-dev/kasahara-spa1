@@ -1,39 +1,38 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Staff;
 
+use App\Models\ParentMessage;
 use Illuminate\Http\Request;
+use App\Http\Requests\Staff\AttendanceRequest as StaffAttendanceRequest;
+use App\Models\Parent_message;
+use App\Models\Staff_message;
+use App\Models\Event;
 use App\Models\Attendance;
-use App\Models\Calendar;
-use Carbon\Carbon;
-use App\Http\Requests\AttendanceRequest;
+use App\Models\User;
+use Illuminate\Support\Str;
+use App\Models\StaffMessage;
+use Illuminate\Support\Facades\Storage;
+use PhpParser\NodeVisitor\ParentConnectingVisitor;
 
 class AttendanceController extends Controller
 {
-    private function isPastDeadline($calendarId){
-        $calendar = Calendar::find($calendarId);
-        if(!$calendar){
-            return false;
-        }
-        $targetDate = Carbon::parse($calendar->date)->startOfDay();
-        $today = Carbon::today();
-        if($targetDate->isAfter($today)){
-            return false;
-        }
-        if($targetDate->isBefore($today)){
-            return true;
-        }
-        $deadlineTimeStr = config('app_settings.deadline_time');
-        $deadline = Carbon::createFromTimeString($deadlineTimeStr);
-        if(Carbon::now()->isAfter($deadline)){
-            return true;
-        }
-        return false;
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        //
     }
-    public function store(AttendanceRequest $request)
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(StaffAttendanceRequest $request)
     {
         $validated = $request->validated();
-        $userId = auth()->id();
+        $editorId = auth()->id();
+        $userId = $validated['user_id'];
         $calendarId = $validated['calendar_id'];
         if($this->isPastDeadline($calendarId)){
             return response()->json(['message' => 'アプリでの登録可能時刻を過ぎています。直接園にお電話ください。']);
@@ -55,40 +54,52 @@ class AttendanceController extends Controller
             'calendar_id' => $calendarId,
             'status'      => $validated['status'],
             'detail'      => ((int)$validated['status'] === 2) ? $validated['detail'] : null,
+            'editor_id' => $editorId,
         ]);
         return response()->json(['message' => '出欠予定を登録しました', 'data' => $newAttendance], 201);
     }
-    public function update(AttendanceRequest $request, $calendarId)
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(StaffAttendanceRequest $request, $attendanceId)
     {
         $validated = $request->validated();
-        $userId = auth()->id();
+        $userId = $validated['user_id'];
         $calendarId = $validated['calendar_id'];
-        if($this->isPastDeadline($calendarId)){
-            return response()->json(['message' => 'アプリでの登録可能時刻を過ぎています。直接園にお電話ください。']);
-        }
-        $attendance = Attendance::where('user_id', $userId)
-            ->where('calendar_id', $calendarId)
-            ->first();
+        $editorId = auth()->id();
+        $attendance = Attendance::find($attendanceId);
         if (!$attendance) {
             return response()->json(['message' => '更新対象のデータが見つかりません'], 404);
         }
         $attendance->status = (int)$validated['status'];
         $attendance->detail = ((int)$validated['status'] === 2) ? $validated['detail'] : null;
+        $attendance->editor_id = $editorId;
         $attendance->save();
         return response()->json(['message' => '出欠予定を更新しました', 'data' => $attendance]);
     }
-    public function destroy($calendarId)
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy($attendanceId)
     {
         $userId = auth()->id();
-        $attendance = Attendance::where('user_id', $userId)
-            ->where('calendar_id', $calendarId)
-            ->first();
+        $attendance = Attendance::find($attendanceId);
         if (!$attendance) {
             return response()->json(['message' => 'すでに出席状態です']);
         }
-        if($this->isPastDeadline($calendarId)){
-            return response()->json(['message' => 'アプリでの登録可能時刻を過ぎています。直接園にお電話ください。']);
-        }
+        $editorId = auth()->id();
+        $attendance->editor_id = $editorId;
+        $attendance->save();
         $attendance->delete();
         return response()->json(['message' => '出席に変更しました']);
     }

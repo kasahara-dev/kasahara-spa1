@@ -10,24 +10,46 @@ import AttendanceStatusSelector from "@/components/AttendanceStatusSelector";
 interface AttendanceDetailModalProps {
   attendance: AttendanceRecord;
   date: Date | undefined;
+  formErrors?: Record<string, string[]>;
   onClose: () => void;
   onSave?: (updatedData: AttendanceRecord) => void;
 }
 
-export default function AttendanceDetailModal({
+export default function AttendanceEditModal({
   attendance,
   date,
+  formErrors = {},
   onClose,
   onSave,
 }: AttendanceDetailModalProps) {
-  // 理由やメモを編集できるように状態を持たせる（必要に応じて使ってください）
   const [status, setStatus] = React.useState<number>(attendance.status);
   const [detail, setDetail] = React.useState(attendance.detail || "");
+
+  const [isStatusChanged, setIsStatusChanged] = React.useState(false);
+
+  // 💡 変更点2: 前回のformErrorsを記憶しておくためのState
+  const [prevFormErrors, setPrevFormErrors] = React.useState(formErrors);
+
+  // 💡 変更点3: レンダー中に「新しいエラーが届いたか」を直接チェックする
+  // 親から新しいエラーが届いたら、ラジオボタン変更フラグを false にリセットし、記憶を更新する
+  if (formErrors !== prevFormErrors) {
+    setIsStatusChanged(false);
+    setPrevFormErrors(formErrors);
+  }
+
+  // 💡 変更点4: ラジオボタンが変わったらフラグを true にする
+  const handleStatusChange = (newStatus: number) => {
+    setStatus(newStatus);
+    setIsStatusChanged(true);
+  };
+
+  // 💡 表示するエラーの計算（ここはそのまま）
+  const currentErrors = isStatusChanged && status !== 2 ? {} : formErrors;
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border flex flex-col max-h-[85vh] animate-scale-up overflow-hidden">
-        {/* ヘッダー（EventEditModalと統一） */}
+        {/* ヘッダー */}
         <div className="px-6 py-4 border-b text-primary flex items-center justify-center bg-slate-50 rounded-t-2xl">
           <h1 className="text-base font-bold text-primary">出欠等連絡詳細</h1>
         </div>
@@ -64,15 +86,20 @@ export default function AttendanceDetailModal({
 
           <AttendanceStatusSelector
             value={status}
-            onChange={setStatus}
+            onChange={handleStatusChange}
             detail={detail}
             onDetailChange={setDetail}
             name={String(attendance.id)}
           />
-          
 
-          {/* タイムスタンプ関係（EventEditModalのフッター上の情報と統一） */}
+          {/* 💡 変更点: currentErrors を参照する */}
+          {currentErrors.global && currentErrors.global.length > 0 && (
+            <div className="p-3 rounded-lg text-sm font-medium border animate-in fade-in duration-200 bg-red-50 border-red-200 text-red-800 dark:bg-red-950/20 dark:border-red-900/50 dark:text-red-400">
+              {currentErrors.global[0]}
+            </div>
+          )}
 
+          {/* タイムスタンプ関係 */}
           {attendance.editor_id !== null &&
           attendance.editor_id !== undefined ? (
             <div className="pt-3 border-t flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
@@ -93,7 +120,7 @@ export default function AttendanceDetailModal({
           ) : null}
         </div>
 
-        {/* フッター（ボタンエリア） */}
+        {/* フッター */}
         <div className="p-4 border-t bg-slate-50 flex justify-end gap-3">
           <Button
             onClick={onClose}
@@ -101,9 +128,10 @@ export default function AttendanceDetailModal({
           >
             戻る
           </Button>
-          {/* 今後、確認済みにする機能などを入れる想定でボタンを配置 */}
           <Button
-            onClick={() => onSave?.({ ...attendance, detail })}
+            onClick={() =>
+              onSave?.({ ...attendance, status: status, detail: detail })
+            }
             className="px-4 py-2 rounded-lg"
           >
             変更を保存する

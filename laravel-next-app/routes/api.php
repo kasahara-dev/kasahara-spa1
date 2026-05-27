@@ -9,6 +9,7 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Staff\CalendarController as StaffCalendarController;
 use App\Http\Controllers\Staff\EventController as StaffEventController;
+use App\Http\Controllers\Staff\AttendanceController as StaffAttendanceController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -18,6 +19,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [StaffCalendarController::class, 'index']);
         Route::patch('/event/{event_id}', [StaffEventController::class, 'update']);
         Route::post('/event',[StaffEventController::class,'store']);
+        Route::post('/attendance',[StaffAttendanceController::class,'store']);
+        Route::patch('/attendance/{attendance_id}',[StaffAttendanceController::class,'update']);
+        Route::delete('/attendance/{attendance_id}',[StaffAttendanceController::class,'destroy']);
     });
     Route::middleware('checkRole:parent')->group(function () {
         Route::get('/', [CalendarController::class, 'index']);

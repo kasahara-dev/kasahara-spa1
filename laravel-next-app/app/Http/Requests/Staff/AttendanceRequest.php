@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Staff;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -26,6 +26,7 @@ class AttendanceRequest extends FormRequest
             'calendar_id' => 'required|integer|exists:calendars,id',
             'status'      => 'required|in:0,1,2',
             'detail'      => 'required_if:status,2|nullable|string|max:200',
+            'user_id' => 'required|exists:users,id',
         ];
     }
     public function messages(): array
@@ -36,6 +37,7 @@ class AttendanceRequest extends FormRequest
             'status.in'            => '正しい出欠ステータスを選択してください。',
             'detail.required_if'   => '遅刻その他の場合は、詳細を入力してください。',
             'detail.max'           => '詳細は200文字以内で入力してください。',
+            'user_id' => '不正な園児IDです。',
         ];
     }
 }

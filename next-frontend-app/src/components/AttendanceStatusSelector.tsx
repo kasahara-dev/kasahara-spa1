@@ -11,7 +11,6 @@ export const ATTENDANCE_STATUS = {
   LATE: 2,
 } as const;
 
-// 選択肢の定義も外に出してスッキリ
 const statusOptions = [
   {
     label: "出席",
