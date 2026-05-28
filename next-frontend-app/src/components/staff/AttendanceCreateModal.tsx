@@ -25,13 +25,16 @@ interface AttendanceCreateModalProps {
   groups: GroupWithUsers[];
   groupCategories: Record<string, string>;
   registeredUserIds: number[];
+  calendarId: number; // 💡 【追加】親から選択中の日のカレンダーIDを受け取る
   formErrors?: Record<string, string[]>;
   onClose: () => void;
-  onSave: (data: {
-    user_id: number;
+  // 💡 【修正】フックの関数の型（calendar_id が含まれる型）に完璧に合わせます
+  onSave: (bodyData: {
     status: number;
-    detail: string;
-  }) => Promise<void>;
+    detail: string | null;
+    user_id: number;
+    calendar_id: number;
+  }) => Promise<Response | undefined>;
 }
 
 export default function AttendanceCreateModal({
@@ -39,6 +42,7 @@ export default function AttendanceCreateModal({
   groups = [],
   groupCategories = {},
   registeredUserIds = [],
+  calendarId,
   formErrors = {},
   onClose,
   onSave,
@@ -208,10 +212,17 @@ export default function AttendanceCreateModal({
           </Button>
           <Button
             disabled={!selectedUserId}
-            onClick={() =>
-              selectedUserId &&
-              onSave({ user_id: selectedUserId, status, detail })
-            }
+            onClick={async () => {
+              if (!selectedUserId) return;
+
+              await onSave({
+                user_id: selectedUserId,
+                status: status,
+                detail: status === 2 ? detail : null,
+                calendar_id: calendarId,
+              });
+              onClose();
+            }}
             className="px-4 py-2 rounded-lg"
           >
             登録する

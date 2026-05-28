@@ -1,122 +1,135 @@
+// 📄 components/staff/EventEditModal.tsx
+
 "use client";
 
 import * as React from "react";
-import { format } from "date-fns";
-import { ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { EventItem } from "@/../../types/calendar";
+import { format } from "date-fns";
 
 interface EventEditModalProps {
   editingEvent: EventItem;
   date: Date | undefined;
-  editTitle: string;
-  editDetail: string;
-  formErrors: Record<string, string[]>;
-  setEditTitle: (value: string) => void;
-  setEditDetail: (value: string) => void;
   onClose: () => void;
-  onSave: () => void;
+  onSave: (params: {
+    editingEvent: EventItem;
+    title: string;
+    detail: string;
+  }) => Promise<Response>;
+  onSuccess: () => void;
 }
 
 export default function EventEditModal({
   editingEvent,
   date,
-  editTitle,
-  editDetail,
-  formErrors,
-  setEditTitle,
-  setEditDetail,
   onClose,
   onSave,
+  onSuccess,
 }: EventEditModalProps) {
+  const [title, setTitle] = React.useState(editingEvent.title || "");
+  const [detail, setDetail] = React.useState(editingEvent.detail || "");
+  const [formErrors, setFormErrors] = React.useState<Record<string, string[]>>(
+    {},
+  );
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const handleSave = async () => {
+    try {
+      setIsSubmitting(true);
+      setFormErrors({});
+      const response = await onSave({ editingEvent, title, detail });
+
+      if (response.status === 200 || response.status === 201) {
+        if (typeof onSuccess === "function") {
+          onSuccess();
+        }
+        onClose();
+        return;
+      }
+
+      if (response.status === 422) {
+        const errorData = await response.json();
+        setFormErrors(errorData.errors || {});
+        return;
+      }
+      throw new Error();
+    } catch (error) {
+      console.error("保存エラー:", error);
+      setFormErrors({
+        global: ["保存に失敗しました。時間を置いて再度お試しください。"],
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border flex flex-col max-h-[85vh] animate-scale-up overflow-hidden">
-        <div className="px-6 py-4 border-b text-primary flex items-center justify-center bg-slate-50 rounded-t-2xl">
-          <h1 className="text-base font-bold text-primary">
-            {editingEvent.id === 0 ? "新規予定の追加" : "行事詳細"}
-          </h1>
-        </div>
-        <div className="flex-1 p-6 space-y-4 overflow-y-auto">
-          <dt className="text-xs font-bold text-slate-600 mb-2">日付</dt>
-          <dt>{date ? format(date, "M月d日(E)", { locale: ja }) : ""}</dt>
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 space-y-4 border">
+        <h2 className="text-lg font-bold text-primary">
+          {editingEvent.id === 0 ? "予定の新規登録" : "予定の編集"}
+        </h2>
 
-          <div className="space-y-1">
+        <div className="space-y-3">
+          <div>
             <label className="text-xs font-bold text-slate-600">タイトル</label>
-            <input
-              type="text"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              placeholder="例：お誕生日会"
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              disabled={isSubmitting}
             />
-            {formErrors.title?.map((msg, i) => (
-              <p
-                key={i}
-                className="text-xs font-semibold text-red-500 mt-1 pl-1"
-              >
-                {msg}
-              </p>
-            ))}
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-600">詳細</label>
-            <textarea
-              rows={6}
-              value={editDetail}
-              onChange={(e) => setEditDetail(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
-              placeholder="行事の詳細や持ち物、注意点などを入力してください"
-            />
-            {formErrors.detail?.map((msg, i) => (
-              <p
-                key={i}
-                className="text-xs font-semibold text-red-500 mt-1 pl-1"
-              >
-                {msg}
-              </p>
-            ))}
-            {formErrors.calendar_id && (
-              <p className="text-xs font-semibold text-red-500 bg-red-50 p-2 rounded-lg border border-red-100">
-                日付データが正しく選択されていません。再度お試しください。
-              </p>
+            {formErrors.title && (
+              <p className="text-xs text-red-500 mt-1">{formErrors.title[0]}</p>
             )}
           </div>
 
-          {editingEvent.id !== 0 && (
-            <div className="pt-3 border-t flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
-              {typeof editingEvent.updated_at === "string" && (
-                <div className="flex items-center gap-1 text-xs text-slate-400">
-                  <span>最終更新:</span>
-                  <time>
-                    {format(
-                      new Date(editingEvent.updated_at),
-                      "yyyy/MM/dd HH:mm",
-                      { locale: ja },
-                    )}
-                  </time>
-                </div>
-              )}
-              <div className="flex items-center gap-1">
-                <span>編集者:</span>
-                <span className="font-medium text-slate-500">
-                  {editingEvent.editor?.name ||
-                    `スタッフ(ID: ${editingEvent.editor_id})`}
-                </span>
-              </div>
-            </div>
-          )}
+          <div>
+            <label className="text-xs font-bold text-slate-600">詳細</label>
+            <Textarea
+              value={detail}
+              onChange={(e) => setDetail(e.target.value)}
+              disabled={isSubmitting}
+              className="min-h-[120px] resize-none"
+            />
+            {formErrors.detail && (
+              <p className="text-xs text-red-500 mt-1">
+                {formErrors.detail[0]}
+              </p>
+            )}
+          </div>
         </div>
-        <div className="p-4 border-t bg-slate-50 flex justify-end gap-3">
-          <Button
-            onClick={onClose}
-            className="px-4 py-2 border text-primary rounded-lg bg-white"
-          >
-            戻る
+
+        {formErrors.global && (
+          <div className="p-3 rounded-lg text-sm bg-red-50 text-red-800 border border-red-200">
+            {formErrors.global[0]}
+          </div>
+        )}
+
+        {editingEvent.id !== 0 && (
+          <div className="pt-3 border-t flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+            <div className="flex items-center gap-1">
+              <span className="font-bold">最終更新:</span>{" "}
+              {editingEvent.updated_at
+                ? format(new Date(editingEvent.updated_at), "yyyy/MM/dd HH:mm")
+                : "---"}
+            </div>
+            {editingEvent.editor?.name && (
+              <div className="flex items-center gap-1">
+                <span className="font-bold">最終更新者:</span>{" "}
+                {editingEvent.editor.name}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="flex justify-end gap-3 pt-2">
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+            キャンセル
           </Button>
-          <Button onClick={onSave} className="px-4 py-2 rounded-lg">
-            {editingEvent.id === 0 ? "登録する" : "変更を保存する"}
+          <Button onClick={handleSave} disabled={isSubmitting}>
+            {isSubmitting ? "保存中..." : "保存する"}
           </Button>
         </div>
       </div>

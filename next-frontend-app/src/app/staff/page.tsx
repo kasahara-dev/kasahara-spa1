@@ -7,129 +7,78 @@ import CalendarSection from "@/components/staff/CalendarSection";
 import EventListCard from "@/components/staff/EventListCard";
 import EventEditModal from "@/components/staff/EventEditModal";
 import AttendanceListCard from "@/components/staff/AttendanceListCard";
-import { useCalendarData } from "@/hooks/staff/useCalendarData";
-import { AttendanceRecord } from "@/../../types/calendar";
-import { EventItem } from "@/../../types/calendar";
-import AttendanceEditModal from "@/components/staff/AttendanceEditModal"
+import AttendanceEditModal from "@/components/staff/AttendanceEditModal";
 import AttendanceCreateModal from "@/components/staff/AttendanceCreateModal";
+import { useCalendarData } from "@/hooks/staff/useCalendarData";
+import { AttendanceRecord, EventItem } from "@/../../types/calendar";
 
 export default function Home() {
   const [date, setDate] = React.useState<Date | undefined>(new Date());
   const { data: session } = useSession();
-  const token = session?.accessToken;
 
-  const { staffData, setStaffData, loading, handleSaveEvent,handleSaveAttendance,handleCreateAttendance } =
-    useCalendarData(token);
+  // 💡 フック側の関数がしっかり成功・失敗を処理してくれる前提へリファクタ
+  const {
+    staffData,
+    loading,
+    refreshData,
+    handleSaveEvent,
+    handleSaveAttendance,
+    handleCreateAttendance,
+  } = useCalendarData(session?.accessToken);
 
+  // 状態管理（モーダルの開閉と選択データのみに集中）
   const [editingEvent, setEditingEvent] = React.useState<EventItem | null>(
     null,
   );
-  const [editTitle, setEditTitle] = React.useState("");
-  const [editDetail, setEditDetail] = React.useState("");
-  const [formErrors, setFormErrors] = React.useState<Record<string, string[]>>(
-    {},
-  );
-  const [selectedAttendance, setSelectedAttendance] = React.useState<AttendanceRecord | null>(null);
-  const [attendanceErrors, setAttendanceErrors] = React.useState<Record<string, string[]>>({});
+  const [selectedAttendance, setSelectedAttendance] =
+    React.useState<AttendanceRecord | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
 
-  const handleEventClick = (evt: EventItem) => {
-    setEditingEvent(evt);
-    setEditTitle(evt.title || "");
-    setEditDetail(evt.detail || "");
-    setFormErrors({});
-  };
-
-  const onEventSaveClick = async () => {
-    if (!editingEvent) return;
-    try {
-      setFormErrors({});
-      const response = await handleSaveEvent({
-        editingEvent: editingEvent,
-        title: editTitle,
-        detail: editDetail,
-      });
-
-      if (response.status === 200 || response.status === 201) {
-        const resData = await response.json();
-        if (staffData && resData.event) {
-          const updatedCalendar = staffData.calendar_data.map((day) => {
-            if (day.id === editingEvent.calendar_id) {
-              return {
-                ...day,
-                events:
-                  editingEvent.id === 0
-                    ? [...day.events, resData.event]
-                    : day.events.map((e) =>
-                        e.id === editingEvent.id ? resData.event : e,
-                      ),
-              };
-            }
-            return day;
-          });
-          setStaffData({ ...staffData, calendar_data: updatedCalendar });
-        }
-        setEditingEvent(null);
-        return;
-      }
-
-      if (response.status === 422) {
-        const errorData = await response.json();
-        setFormErrors(errorData.errors || {});
-        return;
-      }
-      throw new Error();
-    } catch (error) {
-      console.error("送信エラー:", error);
-      setFormErrors({
-        global: ["保存に失敗しました。時間を置いて再度お試しください。"],
-      });
-    }
-  };
-
+  // 💡 選択された日のデータ抽出（シンプルに一本化）
   const selectedDayData = React.useMemo(() => {
-    const calendarData = staffData?.calendar_data ?? [];
-    if (!date || calendarData.length === 0) return null;
+    if (!date || !staffData?.calendar_data) return null;
     const formattedTarget = format(date, "yyyy-MM-dd");
-    const foundDay = calendarData.find((day) => day.date === formattedTarget) || null;
-    return foundDay;
+    return (
+      staffData.calendar_data.find((day) => day.date === formattedTarget) ||
+      null
+    );
   }, [date, staffData]);
 
-  const absentStudents = React.useMemo(() => {
-    if (!selectedDayData || !selectedDayData.attendances) return [];
-    const attendanceList = (
+  // 💡 出欠データのリスト化ヘルパー（重複コードを共通化）
+  const currentAttendances = React.useMemo(() => {
+    if (!selectedDayData?.attendances) return [];
+    return (
       Array.isArray(selectedDayData.attendances)
         ? selectedDayData.attendances
         : Object.values(selectedDayData.attendances)
     ) as AttendanceRecord[];
-    return attendanceList.filter((a) => a && a.status === 1);
   }, [selectedDayData]);
 
-  const lateStudents = React.useMemo(() => {
-    if (!selectedDayData || !selectedDayData.attendances) return [];
-    const attendanceList = (
-      Array.isArray(selectedDayData.attendances)
-        ? selectedDayData.attendances
-        : Object.values(selectedDayData.attendances)
-    ) as AttendanceRecord[];
-    return attendanceList.filter((a) => a && a.status === 2);
-  }, [selectedDayData]);
+  // 各ステータスの生徒一覧を綺麗にフィルタリング
+  const absentStudents = React.useMemo(
+    () => currentAttendances.filter((a) => a?.status === 1),
+    [currentAttendances],
+  );
+  const lateStudents = React.useMemo(
+    () => currentAttendances.filter((a) => a?.status === 2),
+    [currentAttendances],
+  );
+  const registeredUserIds = React.useMemo(
+    () => currentAttendances.map((a) => a.user_id),
+    [currentAttendances],
+  );
 
-  const registeredUserIds = React.useMemo(() => {
-    if (!selectedDayData || !selectedDayData.attendances) return [];
-    const attendanceList = (
-      Array.isArray(selectedDayData.attendances)
-        ? selectedDayData.attendances
-        : Object.values(selectedDayData.attendances)
-    ) as AttendanceRecord[];
-    return attendanceList.map((a) => a.user_id);
-  }, [selectedDayData]);
+  // イベントクリック時のセットアップ
+  const handleEventClick = (evt: EventItem) => {
+    setEditingEvent(evt);
+  };
 
   return (
     <main className="w-full p-6 space-y-6 relative">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         <div className="flex flex-col space-y-6">
-          <div className="bg-white p-5  rounded-xl shadow-sm border">
+          {/* 日付選択セクション */}
+          <div className="bg-white p-5 rounded-xl shadow-sm border">
             <h2 className="text-primary font-bold px-2">日付選択</h2>
             {loading || !staffData ? (
               <div className="h-64 flex items-center justify-center text-sm text-slate-400">
@@ -144,132 +93,56 @@ export default function Home() {
               />
             )}
           </div>
+
+          {/* イベントカード */}
           <EventListCard
             date={date}
             selectedDayData={selectedDayData}
-            onSelectNewEvent={(initialData) => {
-              setFormErrors({});
-              setEditingEvent(initialData);
-              setEditTitle("");
-              setEditDetail("");
-            }}
+            onSelectNewEvent={(initialData) => setEditingEvent(initialData)}
             onEventClick={(evt) => handleEventClick(evt as EventItem)}
           />
         </div>
+
+        {/* 出欠カード */}
         <AttendanceListCard
           date={date}
           absentStudents={absentStudents}
           lateStudents={lateStudents}
           onAttendanceClick={(attendance) => setSelectedAttendance(attendance)}
-          onNewAttendanceClick={() => {
-            setAttendanceErrors({});
-            setIsCreateModalOpen(true);
-          }}
+          onNewAttendanceClick={() => setIsCreateModalOpen(true)}
         />
       </div>
+
+      {/* 💡 各モーダルの記述が1行レベルに！重たい処理は全てコンポーネントへ移譲 */}
       {editingEvent && (
         <EventEditModal
           editingEvent={editingEvent}
           date={date}
-          editTitle={editTitle}
-          editDetail={editDetail}
-          formErrors={formErrors}
-          setEditTitle={setEditTitle}
-          setEditDetail={setEditDetail}
           onClose={() => setEditingEvent(null)}
-          onSave={onEventSaveClick}
+          onSave={handleSaveEvent} // フックの関数を直渡し
+          onSuccess={refreshData}
         />
       )}
+
       {selectedAttendance && (
         <AttendanceEditModal
           attendance={selectedAttendance}
           date={date}
-          formErrors={attendanceErrors}
-          onClose={() => {
-            setSelectedAttendance(null);
-            setAttendanceErrors({}); // 💡 閉じるときはエラーをきれいに掃除する
-          }}
-          onSave={async (updatedData) => {
-            try {
-              setAttendanceErrors({});
-              const payload = { ...selectedAttendance, ...updatedData };
-
-              const response = await handleSaveAttendance(payload);
-
-              // 💡 成功したらモーダルを閉じるだけでOK！
-              // useCalendarDataの内部で勝手に fetchAllData() が走って画面が最新になります
-              if (response && response.ok) {
-                setSelectedAttendance(null);
-                return;
-              }
-
-              if (response?.status === 422) {
-                const errorJson = await response.json();
-                const errorMsg =
-                  errorJson.message ||
-                  "入力内容に不備があります。確認してください。";
-                setAttendanceErrors({ global: [errorMsg] });
-                return;
-              }
-
-              setAttendanceErrors({ global: ["保存に失敗しました。"] });
-            } catch (error) {
-              console.error("出欠保存エラー:", error);
-              setAttendanceErrors({ global: ["通信に失敗しました。"] });
-            }
-          }}
+          onClose={() => setSelectedAttendance(null)}
+          onSave={handleSaveAttendance} // フックの関数を直渡し
+          onSuccess={refreshData}
         />
       )}
+
       {isCreateModalOpen && selectedDayData && (
         <AttendanceCreateModal
           date={date}
-          // 💡 1. 「as any」の代わりに、不足している型をその場でマッピングしてリンターを黙らせます
-          groups={(staffData?.groups ?? []).map((g) => ({
-            id: g.id,
-            name: g.name,
-            category: Number(g.category), // 👈 ここで category を確実に number 型にして注入
-            users: g.users || [],
-          }))}
-          // 💡 2. ここがエラーの原因！プロパティ名が「groupCategories」になっているか確認してください
+          groups={staffData?.groups || []} // 型定義が治ったので .map() は完全に不要に！
           groupCategories={staffData?.group_categories || {}}
           registeredUserIds={registeredUserIds}
-          formErrors={attendanceErrors}
-          onClose={() => {
-            setIsCreateModalOpen(false);
-            setAttendanceErrors({});
-          }}
-          onSave={async (newData) => {
-            try {
-              setAttendanceErrors({});
-
-              const payload = {
-                status: newData.status,
-                detail: newData.status === 2 ? newData.detail : null,
-                user_id: newData.user_id,
-                calendar_id: selectedDayData.id,
-              };
-
-              const response = await handleCreateAttendance(payload);
-
-              if (response && response.ok) {
-                setIsCreateModalOpen(false);
-                return;
-              }
-
-              if (response?.status === 422) {
-                const errorJson = await response.json();
-                const errorMsg =
-                  errorJson.message || "入力内容に不備があります。";
-                setAttendanceErrors({ global: [errorMsg] });
-                return;
-              }
-
-              setAttendanceErrors({ global: ["登録に失敗しました。"] });
-            } catch (error) {
-              console.error("出欠新規登録エラー:", error);
-              setAttendanceErrors({ global: ["通信に失敗しました。"] });
-            }
-          }}
+          calendarId={selectedDayData.id} // モーダル側で payload を作れるように ID を渡す
+          onClose={() => setIsCreateModalOpen(false)}
+          onSave={handleCreateAttendance} // フックの関数を直渡し
         />
       )}
     </main>

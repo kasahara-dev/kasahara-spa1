@@ -12,39 +12,33 @@ interface AttendanceDetailModalProps {
   date: Date | undefined;
   formErrors?: Record<string, string[]>;
   onClose: () => void;
-  onSave?: (updatedData: AttendanceRecord) => void;
+  onSave: (updatedData: AttendanceRecord) => Promise<Response | undefined>;
+  onSuccess: () => void;
 }
 
 export default function AttendanceEditModal({
   attendance,
   date,
-  formErrors = {},
+  formErrors = {}, // 💡 親から渡されない場合は空オブジェクト
   onClose,
   onSave,
+  onSuccess,
 }: AttendanceDetailModalProps) {
   const [status, setStatus] = React.useState<number>(attendance.status);
   const [detail, setDetail] = React.useState(attendance.detail || "");
 
-  const [isStatusChanged, setIsStatusChanged] = React.useState(false);
+  // 🔴 【削除】ここにあった以下のStateとif文を「すべて」綺麗に消し去ります！
+  // const [isStatusChanged, setIsStatusChanged] = React.useState(false);
+  // const [prevFormErrors, setPrevFormErrors] = React.useState(formErrors);
+  // if (formErrors !== prevFormErrors) { ... }
 
-  // 💡 変更点2: 前回のformErrorsを記憶しておくためのState
-  const [prevFormErrors, setPrevFormErrors] = React.useState(formErrors);
+  // 💡 代わりに、単純に親から届いたエラーをそのまま使う形にします
+  const currentErrors = formErrors;
 
-  // 💡 変更点3: レンダー中に「新しいエラーが届いたか」を直接チェックする
-  // 親から新しいエラーが届いたら、ラジオボタン変更フラグを false にリセットし、記憶を更新する
-  if (formErrors !== prevFormErrors) {
-    setIsStatusChanged(false);
-    setPrevFormErrors(formErrors);
-  }
-
-  // 💡 変更点4: ラジオボタンが変わったらフラグを true にする
+  // ラジオボタン変更時はただ status を変えるだけ
   const handleStatusChange = (newStatus: number) => {
     setStatus(newStatus);
-    setIsStatusChanged(true);
   };
-
-  // 💡 表示するエラーの計算（ここはそのまま）
-  const currentErrors = isStatusChanged && status !== 2 ? {} : formErrors;
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
@@ -129,9 +123,30 @@ export default function AttendanceEditModal({
             戻る
           </Button>
           <Button
-            onClick={() =>
-              onSave?.({ ...attendance, status: status, detail: detail })
-            }
+            onClick={async () => {
+              try {
+                // 💡 1. フォームのデータを最新の入力値で組み立ててAPIに飛ばす
+                const response = await onSave?.({
+                  ...attendance,
+                  status: status,
+                  detail: status === 2 ? detail : null, // 遅刻(2)以外なら理由は裏でnullにする優しさ
+                });
+
+                // 💡 2. 通信が成功（ok または status が 200台）したら
+                if (response && response.ok) {
+                  if (typeof onSuccess === "function") {
+                    onSuccess(); // 🌟 画面を最新にリフレッシュ！
+                  }
+                  onClose(); // 🌟 ここでモーダルがパッと閉じます！
+                  return;
+                }
+
+                // 💡 422などのエラーハンドリングをモーダル内で完結させたい場合はここに追記できますが、
+                // 今回はシンプルに成功時のクローズを最優先で差し込みます。
+              } catch (error) {
+                console.error("出欠保存エラー:", error);
+              }
+            }}
             className="px-4 py-2 rounded-lg"
           >
             変更を保存する

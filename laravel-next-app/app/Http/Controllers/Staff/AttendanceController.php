@@ -40,9 +40,12 @@ class AttendanceController extends Controller
             ->first();
 
         if ($attendance) {
-            $attendance->status = (int)$validated['status'];
-            $attendance->detail = ((int)$validated['status'] === 2) ? $validated['detail'] : null;
             $attendance->restore();
+            $attendance->update([
+                'status'    => (int)$validated['status'],
+                'detail'    => ((int)$validated['status'] === 2) ? $validated['detail'] : null,
+                'editor_id' => $editorId,
+    ]);
 
             return response()->json(['message' => '出欠予定を登録しました', 'data' => $attendance]);
         }

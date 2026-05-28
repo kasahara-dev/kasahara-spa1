@@ -11,6 +11,28 @@ export function useCalendarData(token: string | undefined) {
   const [staffData, setStaffData] =
     React.useState<StaffCalendarResponse | null>(null);
 
+  const refreshData = async () => {
+    if (!token) return; // トークンがなければ処理しない
+
+    try {
+      // 💡 省略（...）をなくし、正しいヘッダー情報を設定します
+      const res = await fetch("/api/proxy/staff", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setStaffData(data); // 💡 最新データをStateに上書き！
+      }
+    } catch (error) {
+      console.error("データの再取得に失敗しました:", error);
+    }
+  };
+
   // 💡 状態は引き続きシンプルに派生させます
   const loading = !!token && !staffData;
 
@@ -152,6 +174,7 @@ export function useCalendarData(token: string | undefined) {
     staffData,
     setStaffData,
     loading,
+    refreshData,
     handleSaveEvent,
     handleSaveAttendance,
     handleCreateAttendance,
