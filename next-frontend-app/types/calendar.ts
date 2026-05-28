@@ -37,6 +37,16 @@ export interface StaffCalendarResponse {
     end_date: string;
   };
   calendar_data: CalendarDayData[];
+  groups: {
+    id: number;
+    name: string;
+    category: number;
+    users: {
+      id: number;
+      name: string;
+    }[];
+  }[];
+  group_categories:Record<string,string>
 }
 
 export interface EventItem {

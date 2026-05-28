@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Staff;
 
 use Illuminate\Http\Request;
 use App\Models\Calendar;
+use App\Models\Group;
 
 class CalendarController extends Controller
 {
@@ -16,6 +17,7 @@ class CalendarController extends Controller
         'start_date' => config('app_settings.start_date'),
         'end_date'   => config('app_settings.end_date'),
     ];
+    $groupCategories = config('group');
     $calendarData = Calendar::with([
         'events.editor:id,name',
         'attendances.user.groups' => function($query){
@@ -26,9 +28,17 @@ class CalendarController extends Controller
         ->orderBy('date', 'asc')
         ->get();
 
+    $groups = Group::with(['users' => function($query){
+        $query->select('users.id','users.name');
+    }])
+    ->select('id','name','category')
+    ->get();
+
     return response()->json([
         'config'        => $config,
         'calendar_data' => $calendarData,
+        'groups' => $groups,
+        'group_categories' => $groupCategories,
     ]);
 }
     /**

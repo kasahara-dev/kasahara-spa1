@@ -126,6 +126,27 @@ export function useCalendarData(token: string | undefined) {
     }
     return res;
   };
+  const handleCreateAttendance = async (bodyData: {
+    status: number;
+    detail: string | null;
+    user_id: number;
+    calendar_id: number;
+  }) => {
+    if (!token) return;
+    const res = await fetch("/api/proxy/staff/attendance", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(bodyData),
+    });
+    if (res.ok) {
+      void fetchAllData();
+    }
+    return res;
+  };
 
   return {
     staffData,
@@ -133,5 +154,6 @@ export function useCalendarData(token: string | undefined) {
     loading,
     handleSaveEvent,
     handleSaveAttendance,
+    handleCreateAttendance,
   };
 }

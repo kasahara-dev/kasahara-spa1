@@ -11,13 +11,14 @@ import { useCalendarData } from "@/hooks/staff/useCalendarData";
 import { AttendanceRecord } from "@/../../types/calendar";
 import { EventItem } from "@/../../types/calendar";
 import AttendanceEditModal from "@/components/staff/AttendanceEditModal"
+import AttendanceCreateModal from "@/components/staff/AttendanceCreateModal";
 
 export default function Home() {
   const [date, setDate] = React.useState<Date | undefined>(new Date());
   const { data: session } = useSession();
   const token = session?.accessToken;
 
-  const { staffData, setStaffData, loading, handleSaveEvent,handleSaveAttendance } =
+  const { staffData, setStaffData, loading, handleSaveEvent,handleSaveAttendance,handleCreateAttendance } =
     useCalendarData(token);
 
   const [editingEvent, setEditingEvent] = React.useState<EventItem | null>(
@@ -30,6 +31,7 @@ export default function Home() {
   );
   const [selectedAttendance, setSelectedAttendance] = React.useState<AttendanceRecord | null>(null);
   const [attendanceErrors, setAttendanceErrors] = React.useState<Record<string, string[]>>({});
+  const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
 
   const handleEventClick = (evt: EventItem) => {
     setEditingEvent(evt);
@@ -113,6 +115,16 @@ export default function Home() {
     return attendanceList.filter((a) => a && a.status === 2);
   }, [selectedDayData]);
 
+  const registeredUserIds = React.useMemo(() => {
+    if (!selectedDayData || !selectedDayData.attendances) return [];
+    const attendanceList = (
+      Array.isArray(selectedDayData.attendances)
+        ? selectedDayData.attendances
+        : Object.values(selectedDayData.attendances)
+    ) as AttendanceRecord[];
+    return attendanceList.map((a) => a.user_id);
+  }, [selectedDayData]);
+
   return (
     <main className="w-full p-6 space-y-6 relative">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
@@ -149,9 +161,12 @@ export default function Home() {
           absentStudents={absentStudents}
           lateStudents={lateStudents}
           onAttendanceClick={(attendance) => setSelectedAttendance(attendance)}
+          onNewAttendanceClick={() => {
+            setAttendanceErrors({});
+            setIsCreateModalOpen(true);
+          }}
         />
       </div>
-
       {editingEvent && (
         <EventEditModal
           editingEvent={editingEvent}
@@ -200,6 +215,58 @@ export default function Home() {
               setAttendanceErrors({ global: ["保存に失敗しました。"] });
             } catch (error) {
               console.error("出欠保存エラー:", error);
+              setAttendanceErrors({ global: ["通信に失敗しました。"] });
+            }
+          }}
+        />
+      )}
+      {isCreateModalOpen && selectedDayData && (
+        <AttendanceCreateModal
+          date={date}
+          // 💡 1. 「as any」の代わりに、不足している型をその場でマッピングしてリンターを黙らせます
+          groups={(staffData?.groups ?? []).map((g) => ({
+            id: g.id,
+            name: g.name,
+            category: Number(g.category), // 👈 ここで category を確実に number 型にして注入
+            users: g.users || [],
+          }))}
+          // 💡 2. ここがエラーの原因！プロパティ名が「groupCategories」になっているか確認してください
+          groupCategories={staffData?.group_categories || {}}
+          registeredUserIds={registeredUserIds}
+          formErrors={attendanceErrors}
+          onClose={() => {
+            setIsCreateModalOpen(false);
+            setAttendanceErrors({});
+          }}
+          onSave={async (newData) => {
+            try {
+              setAttendanceErrors({});
+
+              const payload = {
+                status: newData.status,
+                detail: newData.status === 2 ? newData.detail : null,
+                user_id: newData.user_id,
+                calendar_id: selectedDayData.id,
+              };
+
+              const response = await handleCreateAttendance(payload);
+
+              if (response && response.ok) {
+                setIsCreateModalOpen(false);
+                return;
+              }
+
+              if (response?.status === 422) {
+                const errorJson = await response.json();
+                const errorMsg =
+                  errorJson.message || "入力内容に不備があります。";
+                setAttendanceErrors({ global: [errorMsg] });
+                return;
+              }
+
+              setAttendanceErrors({ global: ["登録に失敗しました。"] });
+            } catch (error) {
+              console.error("出欠新規登録エラー:", error);
               setAttendanceErrors({ global: ["通信に失敗しました。"] });
             }
           }}

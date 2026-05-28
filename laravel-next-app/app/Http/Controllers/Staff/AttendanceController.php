@@ -34,9 +34,6 @@ class AttendanceController extends Controller
         $editorId = auth()->id();
         $userId = $validated['user_id'];
         $calendarId = $validated['calendar_id'];
-        if($this->isPastDeadline($calendarId)){
-            return response()->json(['message' => 'アプリでの登録可能時刻を過ぎています。直接園にお電話ください。']);
-        }
         $attendance = Attendance::withTrashed()
             ->where('user_id', $userId)
             ->where('calendar_id', $calendarId)

@@ -12,6 +12,7 @@ interface AttendanceListCardProps {
   absentStudents: AttendanceRecord[];
   lateStudents: AttendanceRecord[];
   onAttendanceClick: (attendance: AttendanceRecord) => void;
+  onNewAttendanceClick: () => void;
 }
 
 export default function AttendanceListCard({
@@ -19,6 +20,7 @@ export default function AttendanceListCard({
   absentStudents,
   lateStudents,
   onAttendanceClick,
+  onNewAttendanceClick,
 }: AttendanceListCardProps) {
   return (
     <Card className="min-h-[580px] flex flex-col bg-white">
@@ -38,7 +40,7 @@ export default function AttendanceListCard({
             </span>
           </div>
         </div>
-        <Button className="h-8 px-3 text-xs">新規登録</Button>
+        <Button className="h-8 px-3 text-xs" onClick={onNewAttendanceClick} disabled={!date}>新規登録</Button>
       </CardHeader>
 
       <CardContent className="flex-1 space-y-3 overflow-y-auto max-h-[440px]">
