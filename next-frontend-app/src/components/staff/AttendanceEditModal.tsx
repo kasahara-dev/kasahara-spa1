@@ -19,7 +19,7 @@ interface AttendanceDetailModalProps {
 export default function AttendanceEditModal({
   attendance,
   date,
-  formErrors = {}, // 💡 親から渡されない場合は空オブジェクト
+  formErrors = {},
   onClose,
   onSave,
   onSuccess,
@@ -27,15 +27,8 @@ export default function AttendanceEditModal({
   const [status, setStatus] = React.useState<number>(attendance.status);
   const [detail, setDetail] = React.useState(attendance.detail || "");
 
-  // 🔴 【削除】ここにあった以下のStateとif文を「すべて」綺麗に消し去ります！
-  // const [isStatusChanged, setIsStatusChanged] = React.useState(false);
-  // const [prevFormErrors, setPrevFormErrors] = React.useState(formErrors);
-  // if (formErrors !== prevFormErrors) { ... }
-
-  // 💡 代わりに、単純に親から届いたエラーをそのまま使う形にします
   const currentErrors = formErrors;
 
-  // ラジオボタン変更時はただ status を変えるだけ
   const handleStatusChange = (newStatus: number) => {
     setStatus(newStatus);
   };
@@ -85,8 +78,6 @@ export default function AttendanceEditModal({
             onDetailChange={setDetail}
             name={String(attendance.id)}
           />
-
-          {/* 💡 変更点: currentErrors を参照する */}
           {currentErrors.global && currentErrors.global.length > 0 && (
             <div className="p-3 rounded-lg text-sm font-medium border animate-in fade-in duration-200 bg-red-50 border-red-200 text-red-800 dark:bg-red-950/20 dark:border-red-900/50 dark:text-red-400">
               {currentErrors.global[0]}
@@ -125,24 +116,19 @@ export default function AttendanceEditModal({
           <Button
             onClick={async () => {
               try {
-                // 💡 1. フォームのデータを最新の入力値で組み立ててAPIに飛ばす
                 const response = await onSave?.({
                   ...attendance,
                   status: status,
-                  detail: status === 2 ? detail : null, // 遅刻(2)以外なら理由は裏でnullにする優しさ
+                  detail: status === 2 ? detail : null,
                 });
 
-                // 💡 2. 通信が成功（ok または status が 200台）したら
                 if (response && response.ok) {
                   if (typeof onSuccess === "function") {
-                    onSuccess(); // 🌟 画面を最新にリフレッシュ！
+                    onSuccess();
                   }
-                  onClose(); // 🌟 ここでモーダルがパッと閉じます！
+                  onClose();
                   return;
                 }
-
-                // 💡 422などのエラーハンドリングをモーダル内で完結させたい場合はここに追記できますが、
-                // 今回はシンプルに成功時のクローズを最優先で差し込みます。
               } catch (error) {
                 console.error("出欠保存エラー:", error);
               }
