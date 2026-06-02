@@ -16,7 +16,7 @@ import AttendanceStatusSelector from "@/components/AttendanceStatusSelector";
 interface GroupWithUsers {
   id: number;
   name: string;
-  category: number; // 💡 category の型もしっかり確保！
+  category: number;
   users: { id: number; name: string }[];
 }
 
@@ -25,15 +25,16 @@ interface AttendanceCreateModalProps {
   groups: GroupWithUsers[];
   groupCategories: Record<string, string>;
   registeredUserIds: number[];
-  calendarId: number; // 💡 【追加】親から選択中の日のカレンダーIDを受け取る
+  calendarId: number;
   formErrors?: Record<string, string[]>;
+  working: number;
   onClose: () => void;
-  // 💡 【修正】フックの関数の型（calendar_id が含まれる型）に完璧に合わせます
   onSave: (bodyData: {
     status: number;
     detail: string | null;
     user_id: number;
     calendar_id: number;
+    working: number;
   }) => Promise<Response | undefined>;
 }
 
@@ -43,6 +44,7 @@ export default function AttendanceCreateModal({
   groupCategories = {},
   registeredUserIds = [],
   calendarId,
+  working,
   formErrors = {},
   onClose,
   onSave,
@@ -50,23 +52,13 @@ export default function AttendanceCreateModal({
   const [selectedUserId, setSelectedUserId] = React.useState<number | null>(
     null,
   );
-  const [status, setStatus] = React.useState<number>(1); // 初期値：お休み(1)
+  const [status, setStatus] = React.useState<number>(1);
   const [detail, setDetail] = React.useState("");
 
-  const [isStatusChanged, setIsStatusChanged] = React.useState(false);
-  const [prevFormErrors, setPrevFormErrors] = React.useState(formErrors);
-
-  if (formErrors !== prevFormErrors) {
-    setIsStatusChanged(false);
-    setPrevFormErrors(formErrors);
-  }
-
-  // 大分類ごとにグループをフィルタリングする関数
   const getGroupsByCategory = (catNum: number) => {
     return groups.filter((group) => group.category === catNum);
   };
 
-  // Laravelから届いたカテゴリ設定のキーを数値配列にしてソート
   const categorizedGroups = React.useMemo(() => {
     const activeCategories = Object.keys(groupCategories).map(Number);
     return activeCategories.sort();
@@ -74,10 +66,9 @@ export default function AttendanceCreateModal({
 
   const handleStatusChange = (newStatus: number) => {
     setStatus(newStatus);
-    setIsStatusChanged(true);
   };
 
-  const currentErrors = isStatusChanged && status !== 2 ? {} : formErrors;
+  const currentErrors = formErrors;
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -103,7 +94,6 @@ export default function AttendanceCreateModal({
           <div className="space-y-1">
             <label className="text-xs font-bold text-slate-600">園児選択</label>
 
-            {/* ▽ 階層1: 大分類（全園児、学年、組、通園方法など） */}
             <Accordion
               type="multiple"
               className="w-full border rounded-lg px-2 bg-slate-50/50"
@@ -119,7 +109,6 @@ export default function AttendanceCreateModal({
                   </AccordionTrigger>
 
                   <AccordionContent className="pt-1 pb-3 px-2 h-auto overflow-visible">
-                    {/* ▽ 階層2: 各大分類の中のグループ名（年長、ひよこ組など） */}
                     <Accordion
                       type="single"
                       collapsible
@@ -136,7 +125,6 @@ export default function AttendanceCreateModal({
                           </AccordionTrigger>
 
                           <AccordionContent className="pt-2 pb-2 px-1 h-auto overflow-visible">
-                            {/* ▽ 階層3: 園児のボタン一覧 */}
                             <div className="grid grid-cols-2 gap-2">
                               {group.users.map((user) => {
                                 const isRegistered = registeredUserIds.includes(
@@ -184,22 +172,42 @@ export default function AttendanceCreateModal({
           {/* 出欠ステータス選択 */}
           {selectedUserId && (
             <div className="pt-2 animate-in fade-in duration-200">
-              <AttendanceStatusSelector
-                value={status}
-                onChange={handleStatusChange}
-                detail={detail}
-                onDetailChange={setDetail}
-                name="create-modal"
-              />
+              <Accordion
+                type="single"
+                collapsible
+                className="w-full"
+                defaultValue="status-select"
+              >
+                <AccordionItem value="status-select" className="border-none">
+                  <AttendanceStatusSelector
+                    value={status}
+                    onChange={handleStatusChange}
+                    detail={detail}
+                    onDetailChange={setDetail}
+                    name="create-modal"
+                  />
+                </AccordionItem>
+              </Accordion>
             </div>
           )}
 
-          {/* バリデーションエラー */}
+          {/* ------------------------------------------------------------- */}
+          {/* 🔴 【修正】バリデーションエラー表示エリア（更新側と統一） */}
+          {/* ------------------------------------------------------------- */}
+          {/* ① detail（遅刻の理由未入力など）のエラー */}
+          {currentErrors.detail && currentErrors.detail.length > 0 && (
+            <div className="p-3 rounded-lg text-sm font-medium border bg-red-50 border-red-200 text-red-800 animate-in fade-in duration-200">
+              {currentErrors.detail[0]}
+            </div>
+          )}
+
+          {/* ② 汎用エラー（global） */}
           {currentErrors.global && currentErrors.global.length > 0 && (
-            <div className="p-3 rounded-lg text-sm font-medium border bg-red-50 border-red-200 text-red-800">
+            <div className="p-3 rounded-lg text-sm font-medium border bg-red-50 border-red-200 text-red-800 animate-in fade-in duration-200">
               {currentErrors.global[0]}
             </div>
           )}
+          {/* ------------------------------------------------------------- */}
         </div>
 
         {/* フッター */}
@@ -215,13 +223,23 @@ export default function AttendanceCreateModal({
             onClick={async () => {
               if (!selectedUserId) return;
 
-              await onSave({
-                user_id: selectedUserId,
-                status: status,
-                detail: status === 2 ? detail : null,
-                calendar_id: calendarId,
-              });
-              onClose();
+              try {
+                // 💡 await でレスポンスをしっかり受け取る
+                const response = await onSave({
+                  user_id: selectedUserId,
+                  status: status,
+                  detail: status === 2 ? detail : null,
+                  calendar_id: calendarId,
+                  working: working,
+                });
+
+                // 🔴 【修正】通信が成功(200番台)したときだけモーダルを閉じる！
+                if (response && response.ok) {
+                  onClose();
+                }
+              } catch (error) {
+                console.error("出欠登録エラー:", error);
+              }
             }}
             className="px-4 py-2 rounded-lg"
           >

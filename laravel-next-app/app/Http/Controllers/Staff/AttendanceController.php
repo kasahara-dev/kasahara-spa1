@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Staff;
 use App\Models\ParentMessage;
 use Illuminate\Http\Request;
 use App\Http\Requests\Staff\AttendanceRequest as StaffAttendanceRequest;
+use App\Models\Calendar;
 use App\Models\Parent_message;
 use App\Models\Staff_message;
 use App\Models\Event;
@@ -38,14 +39,14 @@ class AttendanceController extends Controller
             ->where('user_id', $userId)
             ->where('calendar_id', $calendarId)
             ->first();
-
+        // 論理削除レコードがあった場合、復活させる
         if ($attendance) {
             $attendance->restore();
             $attendance->update([
                 'status'    => (int)$validated['status'],
                 'detail'    => ((int)$validated['status'] === 2) ? $validated['detail'] : null,
                 'editor_id' => $editorId,
-    ]);
+            ]);
 
             return response()->json(['message' => '出欠予定を登録しました', 'data' => $attendance]);
         }

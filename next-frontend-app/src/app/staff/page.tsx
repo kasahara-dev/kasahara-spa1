@@ -24,6 +24,8 @@ export default function Home() {
     handleSaveEvent,
     handleSaveAttendance,
     handleCreateAttendance,
+    formErrors,
+    setFormErrors,
   } = useCalendarData(session?.accessToken);
 
   // 状態管理（モーダルの開閉と選択データのみに集中）
@@ -43,6 +45,8 @@ export default function Home() {
       null
     );
   }, [date, staffData]);
+
+  const working = selectedDayData?.working == 1 ? 1 : 0;
 
   // 💡 出欠データのリスト化ヘルパー（重複コードを共通化）
   const currentAttendances = React.useMemo(() => {
@@ -106,6 +110,7 @@ export default function Home() {
         {/* 出欠カード */}
         <AttendanceListCard
           date={date}
+          working={working}
           absentStudents={absentStudents}
           lateStudents={lateStudents}
           onAttendanceClick={(attendance) => setSelectedAttendance(attendance)}
@@ -113,13 +118,12 @@ export default function Home() {
         />
       </div>
 
-      {/* 💡 各モーダルの記述が1行レベルに！重たい処理は全てコンポーネントへ移譲 */}
       {editingEvent && (
         <EventEditModal
           editingEvent={editingEvent}
           date={date}
           onClose={() => setEditingEvent(null)}
-          onSave={handleSaveEvent} // フックの関数を直渡し
+          onSave={handleSaveEvent}
           onSuccess={refreshData}
         />
       )}
@@ -128,8 +132,10 @@ export default function Home() {
         <AttendanceEditModal
           attendance={selectedAttendance}
           date={date}
-          onClose={() => setSelectedAttendance(null)}
-          onSave={handleSaveAttendance} // フックの関数を直渡し
+          working={working}
+          onClose={() => { setSelectedAttendance(null); setFormErrors({}); }}
+          formErrors={formErrors}
+          onSave={handleSaveAttendance}
           onSuccess={refreshData}
         />
       )}
@@ -137,12 +143,14 @@ export default function Home() {
       {isCreateModalOpen && selectedDayData && (
         <AttendanceCreateModal
           date={date}
-          groups={staffData?.groups || []} // 型定義が治ったので .map() は完全に不要に！
+          groups={staffData?.groups || []}
           groupCategories={staffData?.group_categories || {}}
           registeredUserIds={registeredUserIds}
-          calendarId={selectedDayData.id} // モーダル側で payload を作れるように ID を渡す
-          onClose={() => setIsCreateModalOpen(false)}
-          onSave={handleCreateAttendance} // フックの関数を直渡し
+          calendarId={selectedDayData.id}
+          formErrors={formErrors}
+          working={selectedDayData.working}
+          onClose={() => { setIsCreateModalOpen(false); setFormErrors({}); }}
+          onSave={handleCreateAttendance}
         />
       )}
     </main>

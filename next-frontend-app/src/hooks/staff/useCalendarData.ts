@@ -11,11 +11,15 @@ export function useCalendarData(token: string | undefined) {
   const [staffData, setStaffData] =
     React.useState<StaffCalendarResponse | null>(null);
 
+  // 💡 【追加】バリデーションエラーを管理するState
+  const [formErrors, setFormErrors] = React.useState<Record<string, string[]>>(
+    {},
+  );
+
   const refreshData = async () => {
-    if (!token) return; // トークンがなければ処理しない
+    if (!token) return;
 
     try {
-      // 💡 省略（...）をなくし、正しいヘッダー情報を設定します
       const res = await fetch("/api/proxy/staff", {
         method: "GET",
         headers: {
@@ -26,17 +30,15 @@ export function useCalendarData(token: string | undefined) {
 
       if (res.ok) {
         const data = await res.json();
-        setStaffData(data); // 💡 最新データをStateに上書き！
+        setStaffData(data);
       }
     } catch (error) {
       console.error("データの再取得に失敗しました:", error);
     }
   };
 
-  // 💡 状態は引き続きシンプルに派生させます
   const loading = !!token && !staffData;
 
-  // 💡 データの取得関数
   const fetchAllData = React.useCallback(async () => {
     if (!token) return;
 
@@ -59,6 +61,7 @@ export function useCalendarData(token: string | undefined) {
       console.error("スタッフデータ取得エラー:", error);
     }
   }, [token]);
+
   React.useEffect(() => {
     if (!token) return;
     Promise.resolve().then(() => {
@@ -83,6 +86,7 @@ export function useCalendarData(token: string | undefined) {
     title: string;
     detail: string;
   }) => {
+    setFormErrors({}); // 保存開始時に前のお掃除
     const isNew = editingEvent.id === 0;
     const url = isNew
       ? "/api/proxy/staff/event"
@@ -109,9 +113,19 @@ export function useCalendarData(token: string | undefined) {
       },
       body: JSON.stringify(bodyData),
     });
+
+    // 💡 エラーハンドリング
+    if (!res.ok) {
+      const errorData = await res.json();
+      setFormErrors(
+        errorData.errors || { global: ["イベントの保存に失敗しました"] },
+      );
+    }
+
     return res;
   };
 
+  // 💡 出欠の「更新（保存）」処理
   const handleSaveAttendance = async (
     updatedData: AttendanceRecord & {
       status: number;
@@ -121,6 +135,8 @@ export function useCalendarData(token: string | undefined) {
     },
   ) => {
     if (!token) return;
+
+    setFormErrors({}); // 🔴 保存を叩く瞬間に、古いエラーをお掃除
 
     const isDelete = updatedData.status === 0;
     const url = `/api/proxy/staff/attendance/${updatedData.id}`;
@@ -145,16 +161,28 @@ export function useCalendarData(token: string | undefined) {
 
     if (res.ok) {
       void fetchAllData();
+    } else {
+      // 🔴 【ここが核心！】Laravelのバリデーションエラー（422など）をキャッチしてStateに入れる
+      const errorData = await res.json();
+      setFormErrors(
+        errorData.errors || { global: ["変更の保存に失敗しました。"] },
+      );
     }
     return res;
   };
+
+  // 💡 出欠の「新規登録」処理
   const handleCreateAttendance = async (bodyData: {
     status: number;
     detail: string | null;
     user_id: number;
     calendar_id: number;
+    working: number;
   }) => {
     if (!token) return;
+
+    setFormErrors({});
+
     const res = await fetch("/api/proxy/staff/attendance", {
       method: "POST",
       headers: {
@@ -164,8 +192,12 @@ export function useCalendarData(token: string | undefined) {
       },
       body: JSON.stringify(bodyData),
     });
+
     if (res.ok) {
       void fetchAllData();
+    } else {
+      const errorData = await res.json();
+      setFormErrors(errorData.errors || { global: ["登録に失敗しました。"] });
     }
     return res;
   };
@@ -178,5 +210,7 @@ export function useCalendarData(token: string | undefined) {
     handleSaveEvent,
     handleSaveAttendance,
     handleCreateAttendance,
+    formErrors,
+    setFormErrors,
   };
 }

@@ -13,6 +13,7 @@ interface AttendanceListCardProps {
   lateStudents: AttendanceRecord[];
   onAttendanceClick: (attendance: AttendanceRecord) => void;
   onNewAttendanceClick: () => void;
+  working: number;
 }
 
 export default function AttendanceListCard({
@@ -21,6 +22,7 @@ export default function AttendanceListCard({
   lateStudents,
   onAttendanceClick,
   onNewAttendanceClick,
+  working,
 }: AttendanceListCardProps) {
   return (
     <Card className="min-h-[580px] flex flex-col bg-white">
@@ -31,24 +33,34 @@ export default function AttendanceListCard({
               ? `${format(date, "M月d日(E)", { locale: ja })} 欠席等連絡`
               : "欠席等連絡"}
           </CardTitle>
-          <div className="flex gap-2">
-            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-700 border border-red-100">
-              お休み: {absentStudents.length} 名
-            </span>
-            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100">
-              その他: {lateStudents.length} 名
-            </span>
-          </div>
+          {working == 0 ? (
+            null
+          ) : (
+            <div className="flex gap-2">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-700 border border-red-100">
+                お休み: {absentStudents.length} 名
+              </span>
+              <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100">
+                その他: {lateStudents.length} 名
+              </span>
+            </div>
+          )}
         </div>
-        <Button className="h-8 px-3 text-xs" onClick={onNewAttendanceClick} disabled={!date}>新規登録</Button>
+        <Button
+          className="h-8 px-3 text-xs"
+          onClick={onNewAttendanceClick}
+          disabled={working == 1 ? !date : true}
+        >
+          新規登録
+        </Button>
       </CardHeader>
 
       <CardContent className="flex-1 space-y-3 overflow-y-auto max-h-[440px]">
         {absentStudents.length === 0 && lateStudents.length === 0 ? (
           <div className="h-full flex items-center justify-center text-slate-400 text-sm italic border border-dashed rounded-xl p-8">
-            {date
+            {working == 1 && date
               ? `${format(date, "M月d日")} の欠席・遅刻児童の詳細がここに並びます`
-              : "日付を選択してください"}
+              : working == 0 ? "園休日です" : "日付を選択してください"}
           </div>
         ) : (
           <div className="space-y-3">

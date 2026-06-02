@@ -114,7 +114,7 @@ export default function ProfileContactsForm() {
 
     return (
       <div className="mb-5">
-        <label className="block text-sm font-semibold text-gray-700 mb-1">
+        <label className="block text-sm font-semibold text-primary mb-1">
           {label}
           {isRequired && (
             <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold">

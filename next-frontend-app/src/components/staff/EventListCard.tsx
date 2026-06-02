@@ -23,7 +23,9 @@ export default function EventListCard({
     <Card className="min-h-[150px]">
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-base font-bold text-primary">
-          {date ? `${format(date, "M月d日(E)", {locale: ja})} 予定` : "選択した日の予定"}
+          {date
+            ? `${format(date, "M月d日(E)", { locale: ja })} 予定`
+            : "選択した日の予定"}
         </CardTitle>
         <Button
           onClick={() => {
@@ -37,13 +39,18 @@ export default function EventListCard({
           }}
           size="sm"
           className="h-8 px-3 text-xs"
+          disabled={selectedDayData?.working == 1 ? false : true}
         >
           新規予定の作成
         </Button>
       </CardHeader>
 
       <CardContent className="space-y-2">
-        {!selectedDayData || selectedDayData.events.length === 0 ? (
+        {selectedDayData?.working == 0 ? (
+          <p className="text-sm text-slate-400 italic py-4 text-center">
+            園休日です
+          </p>
+        ) : !selectedDayData || selectedDayData.events.length === 0 ? (
           <p className="text-sm text-slate-400 italic py-4 text-center">
             この日の予定はありません
           </p>

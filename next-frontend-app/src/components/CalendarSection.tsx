@@ -110,6 +110,7 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
       calendar_id: number | undefined;
       status: number;
       detail: string;
+      working: number | 0;
     } | null = null;
 
     if (formStatus === 0) {
@@ -128,6 +129,7 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
         calendar_id: calendarId,
         status: formStatus,
         detail: formStatus === 2 ? formDetail : "",
+        working: dayData ? dayData.working : 0,
       };
     }
 

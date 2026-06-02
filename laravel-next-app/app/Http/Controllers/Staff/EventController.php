@@ -8,6 +8,7 @@ use App\Http\Requests\EventRequest;
 use App\Models\Parent_message;
 use App\Models\Staff_message;
 use App\Models\Event;
+use App\Models\Calendar;
 use App\Models\User;
 use Illuminate\Support\Str;
 use App\Models\StaffMessage;
@@ -30,6 +31,9 @@ class EventController extends Controller
     public function store(EventRequest $request)
     {
         $validated = $request->validated();
+        if(Calendar::find($validated['calendar_id'])->working == 0){
+            return response()->json(['message' => '園休日です']);
+        }
         $event = Event::create([
             'calendar_id' => $validated['calendar_id'],
             'title' => $validated['title'],
