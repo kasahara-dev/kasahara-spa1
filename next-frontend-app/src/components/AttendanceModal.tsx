@@ -48,6 +48,7 @@ interface AttendanceModalProps {
   submitMessageType: "success" | "error" | "";
   onClose: () => void;
   onSave: (formStatus: number, formDetail: string) => Promise<void>;
+  onStatusChange?: () => void;
 }
 
 export function AttendanceModal({
@@ -59,6 +60,7 @@ export function AttendanceModal({
   submitMessageType,
   onClose,
   onSave,
+  onStatusChange,
 }: AttendanceModalProps) {
   const attendance = dayData?.attendance;
   const targetDateStr = format(date, "yyyy-MM-dd");
@@ -116,7 +118,10 @@ export function AttendanceModal({
             <CardContent className="px-5 space-y-5">
               <AttendanceStatusSelector
                 value={formStatus}
-                onChange={setFormStatus}
+                onChange={(nextStatus) => {
+                  setFormStatus(nextStatus);
+                  onStatusChange?.(); // 親から渡されたメッセージを消す関数を呼び出す
+                }}
                 detail={formDetail}
                 onDetailChange={setFormDetail}
                 disabled={isExpired || isSaving}

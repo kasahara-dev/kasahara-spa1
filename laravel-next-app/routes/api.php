@@ -27,11 +27,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [CalendarController::class, 'index']);
         Route::get('/messages',  [MessageController::class,'index']);
         Route::post('/messages',  [MessageController::class,'store']);
-        Route::get('/messages/ {id}/download', [MessageController::class, 'download']);
+        Route::get('/messages/{id}/download', [MessageController::class, 'download']);
         Route::get('/profile',  [ProfileController::class ,'index']);
         Route::patch('/profile',  [ProfileController::class,  'update']);
         Route::post('/attendance',  [AttendanceController::class , 'store']);
-        Route::put('/attendance/{calendar_id}',[AttendanceController::class,'update']);
-        Route::delete('/attendance/{calendar_id}',[AttendanceController::class,'destroy']);
+        Route::put('/attendance/{attendance_id}',[AttendanceController::class,'update']);
+        Route::delete('/attendance/{attendance_id}',[AttendanceController::class,'destroy']);
     });
 });

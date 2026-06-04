@@ -28,6 +28,7 @@ class MessageController extends Controller
     public function download(Request $request, $id)
     {
         $message = StaffMessage::findOrFail($id);
+        $this->authorize('view', $message);
         $filePath = $message->file_path;
         $absolutePath = storage_path('app/public/' . $filePath);
 

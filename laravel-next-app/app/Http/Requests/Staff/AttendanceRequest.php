@@ -33,7 +33,6 @@ class AttendanceRequest extends FormRequest
             ];
         }else{
             return [
-                'calendar_id' => 'required|integer|exists:calendars,id',
                 'status'      => 'required|in:0,1,2',
                 'detail'      => 'required_if:status,2|nullable|string|max:200',
                 'user_id' => 'required|exists:users,id',

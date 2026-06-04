@@ -99,6 +99,7 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
     // 💡 配列の0番目（あったら1つだけ）を「その日の出欠」として安全に特定
     const existingAttendance = dayData?.attendances?.[0];
     const calendarId = dayData?.id || existingAttendance?.calendar_id;
+    const attendanceId = existingAttendance?.id;
     const hasExistingAttendance = !!existingAttendance;
 
     const baseUrl = apiUrl.endsWith("/")
@@ -114,15 +115,15 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
     } | null = null;
 
     if (formStatus === 0) {
-      if (!calendarId)
+      if (!attendanceId)
         return setFormError("カレンダーIDが特定できないため、削除できません");
-      requestUrl = `${baseUrl}/${calendarId}`;
+      requestUrl = `${baseUrl}/${attendanceId}`;
       requestMethod = "DELETE";
     } else {
       if (hasExistingAttendance && !calendarId)
         return setFormError("カレンダーIDが特定できないため、更新できません");
       if (hasExistingAttendance) {
-        requestUrl = `${baseUrl}/${calendarId}`;
+        requestUrl = `${baseUrl}/${attendanceId}`;
         requestMethod = "PUT";
       }
       requestBody = {
@@ -198,9 +199,6 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
     .map((item) => parseISO(item.date));
   const minDate = parseISO(data.config.start_date);
   const maxDate = parseISO(data.config.end_date);
-
-  // 💡 ユーザーが言う通り、本質は「持っていない場合（null）もある単数形（attendance?）」！
-  // 配列の歪みをここで吸収し、モーダルには綺麗なオブジェクト型にして渡します。
   const rawDayData = data.calendar_data.find(
     (item) => item.date === (date ? format(date, "yyyy-MM-dd") : ""),
   );
@@ -258,8 +256,14 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
           onClose={() => {
             setIsModalOpen(false);
             setDate(undefined);
+            setSubmitMessage("");
+            setSubmitMessageType("");
           }}
           onSave={handleSaveAttendance}
+          onStatusChange={() => {
+            setSubmitMessage("");
+            setSubmitMessageType("");
+          }}
         />
       )}
     </>

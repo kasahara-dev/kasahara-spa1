@@ -58,17 +58,15 @@ class AttendanceController extends Controller
         ]);
         return response()->json(['message' => '出欠予定を登録しました', 'data' => $newAttendance], 201);
     }
-    public function update(AttendanceRequest $request, $calendarId)
+    public function update(AttendanceRequest $request, $attendanceId)
     {
         $validated = $request->validated();
         $userId = auth()->id();
-        $calendarId = $validated['calendar_id'];
-        if($this->isPastDeadline($calendarId)){
-            return response()->json(['message' => 'アプリでの登録可能時刻を過ぎています。直接園にお電話ください。']);
+        $attendance = Attendance::find($attendanceId);
+        $this->authorize('update', $attendance);
+        if($this->isPastDeadline($attendance->calendar_id)){
+            return response()->json(['message' => 'アプリでの登録可能時刻を過ぎています。直接園にお電話ください。'],422);
         }
-        $attendance = Attendance::where('user_id', $userId)
-            ->where('calendar_id', $calendarId)
-            ->first();
         if (!$attendance) {
             return response()->json(['message' => '更新対象のデータが見つかりません'], 404);
         }
@@ -77,17 +75,19 @@ class AttendanceController extends Controller
         $attendance->save();
         return response()->json(['message' => '出欠予定を更新しました', 'data' => $attendance]);
     }
-    public function destroy($calendarId)
+    public function destroy($attendanceId)
     {
         $userId = auth()->id();
-        $attendance = Attendance::where('user_id', $userId)
-            ->where('calendar_id', $calendarId)
-            ->first();
+        $attendance = Attendance::find($attendanceId);
+        $this->authorize('update', $attendance);
+        if (!$attendance) {
+            return response()->json(['message' => '更新対象のデータが見つかりません'], 404);
+        }
         if (!$attendance) {
             return response()->json(['message' => 'すでに出席状態です']);
         }
-        if($this->isPastDeadline($calendarId)){
-            return response()->json(['message' => 'アプリでの登録可能時刻を過ぎています。直接園にお電話ください。']);
+        if($this->isPastDeadline($attendance->calendar_id)){
+            return response()->json(['message' => 'アプリでの登録可能時刻を過ぎています。直接園にお電話ください。'],422);
         }
         $attendance->delete();
         return response()->json(['message' => '出席に変更しました']);
