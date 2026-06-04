@@ -64,7 +64,7 @@ export function AttendanceModal({
 }: AttendanceModalProps) {
   const attendance = dayData?.attendance;
   const targetDateStr = format(date, "yyyy-MM-dd");
-  const formattedDate = format(date, "M月d日", { locale: ja });
+  const formattedDate = format(date, "M月d日(E)", { locale: ja });
   const isExpired = isPastDeadline(targetDateStr, deadlineTime);
   const [formStatus, setFormStatus] = React.useState<number>(
     attendance?.status ?? 0,

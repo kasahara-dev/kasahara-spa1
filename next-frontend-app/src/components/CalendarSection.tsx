@@ -13,8 +13,6 @@ interface CalendarEvent {
   detail?: string | null;
 }
 
-// 💡 ユーザーは1日1つしか持たないので、データ構造を「単数形」として扱えるように
-// APIの生データ（attendances配列）を内包した型定義にします
 interface CalendarApiResponse {
   config: { start_date: string; end_date: string; deadline_time: string };
   calendar_data: Array<{
@@ -22,7 +20,6 @@ interface CalendarApiResponse {
     date: string;
     working: number;
     events: CalendarEvent[];
-    // APIから届く生の配列（※中身は最大1件）
     attendances?: Array<{
       id: number;
       status: number;
@@ -96,7 +93,6 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
       (item) => item.date === targetDateStr,
     );
 
-    // 💡 配列の0番目（あったら1つだけ）を「その日の出欠」として安全に特定
     const existingAttendance = dayData?.attendances?.[0];
     const calendarId = dayData?.id || existingAttendance?.calendar_id;
     const attendanceId = existingAttendance?.id;
@@ -115,13 +111,17 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
     } | null = null;
 
     if (formStatus === 0) {
-      if (!attendanceId)
-        return setFormError("カレンダーIDが特定できないため、削除できません");
+      if (!attendanceId){
+        setFormError("カレンダーIDが特定できないため、削除できません");
+        return;
+      }
       requestUrl = `${baseUrl}/${attendanceId}`;
       requestMethod = "DELETE";
     } else {
-      if (hasExistingAttendance && !calendarId)
-        return setFormError("カレンダーIDが特定できないため、更新できません");
+      if (hasExistingAttendance && !calendarId){
+        setFormError("カレンダーIDが特定できないため、更新できません");
+        return;
+      }
       if (hasExistingAttendance) {
         requestUrl = `${baseUrl}/${attendanceId}`;
         requestMethod = "PUT";
@@ -171,9 +171,11 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
   };
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
-    if (!data || !selectedDate) return;
+    if (!data) return;
+    const targetDate = selectedDate || date;
+    if (!targetDate) return;
 
-    const targetDateStr = format(selectedDate, "yyyy-MM-dd");
+    const targetDateStr = format(targetDate, "yyyy-MM-dd");
     const dayData = data.calendar_data.find(
       (item) => item.date === targetDateStr,
     );
@@ -181,11 +183,11 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
     const start = parseISO(data.config.start_date);
     const end = parseISO(data.config.end_date);
 
-    if (isClosed || !isWithinInterval(selectedDate, { start, end })) return;
+    if (isClosed || !isWithinInterval(targetDate, { start, end })) return;
 
     setSubmitMessage("");
     setSubmitMessageType("");
-    setDate(selectedDate);
+    setDate(targetDate); // 選択状態を維持、または再セット
     setIsModalOpen(true);
   };
 
@@ -227,7 +229,6 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
           hasEvent: data.calendar_data
             .filter((d) => d.events && d.events.length > 0)
             .map((d) => parseISO(d.date)),
-          // 💡 オプショナルチェイニング `?.` を駆使して、データを持たない日（配列がない・空）でも絶対にクラッシュしない安全なフィルター！
           absent: data.calendar_data
             .filter((d) => d.attendances && d.attendances?.[0]?.status === 1)
             .map((d) => parseISO(d.date)),

@@ -16,7 +16,6 @@ export default function Home() {
   const [date, setDate] = React.useState<Date | undefined>(new Date());
   const { data: session } = useSession();
 
-  // 💡 フック側の関数がしっかり成功・失敗を処理してくれる前提へリファクタ
   const {
     staffData,
     loading,
@@ -28,7 +27,6 @@ export default function Home() {
     setFormErrors,
   } = useCalendarData(session?.accessToken);
 
-  // 状態管理（モーダルの開閉と選択データのみに集中）
   const [editingEvent, setEditingEvent] = React.useState<EventItem | null>(
     null,
   );
@@ -36,7 +34,6 @@ export default function Home() {
     React.useState<AttendanceRecord | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
 
-  // 💡 選択された日のデータ抽出（シンプルに一本化）
   const selectedDayData = React.useMemo(() => {
     if (!date || !staffData?.calendar_data) return null;
     const formattedTarget = format(date, "yyyy-MM-dd");
@@ -48,7 +45,6 @@ export default function Home() {
 
   const working = selectedDayData?.working == 1 ? 1 : 0;
 
-  // 💡 出欠データのリスト化ヘルパー（重複コードを共通化）
   const currentAttendances = React.useMemo(() => {
     if (!selectedDayData?.attendances) return [];
     return (
@@ -58,7 +54,6 @@ export default function Home() {
     ) as AttendanceRecord[];
   }, [selectedDayData]);
 
-  // 各ステータスの生徒一覧を綺麗にフィルタリング
   const absentStudents = React.useMemo(
     () => currentAttendances.filter((a) => a?.status === 1),
     [currentAttendances],
@@ -72,7 +67,6 @@ export default function Home() {
     [currentAttendances],
   );
 
-  // イベントクリック時のセットアップ
   const handleEventClick = (evt: EventItem) => {
     setEditingEvent(evt);
   };

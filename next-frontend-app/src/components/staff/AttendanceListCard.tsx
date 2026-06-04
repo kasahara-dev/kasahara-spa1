@@ -41,7 +41,7 @@ export default function AttendanceListCard({
                 お休み: {absentStudents.length} 名
               </span>
               <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100">
-                その他: {lateStudents.length} 名
+                遅刻その他: {lateStudents.length} 名
               </span>
             </div>
           )}
@@ -88,7 +88,7 @@ export default function AttendanceListCard({
               >
                 <div className="flex items-center gap-2">
                   <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-700">
-                    その他
+                    遅刻その他
                   </span>
                   <h4 className="text-sm font-bold text-slate-800">
                     {item.user.name}

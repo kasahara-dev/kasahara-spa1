@@ -63,12 +63,12 @@ class AttendanceController extends Controller
         $validated = $request->validated();
         $userId = auth()->id();
         $attendance = Attendance::find($attendanceId);
+        if (!$attendance) {
+            return response()->json(['message' => '更新対象のデータが見つかりません'], 404);
+        }
         $this->authorize('update', $attendance);
         if($this->isPastDeadline($attendance->calendar_id)){
             return response()->json(['message' => 'アプリでの登録可能時刻を過ぎています。直接園にお電話ください。'],422);
-        }
-        if (!$attendance) {
-            return response()->json(['message' => '更新対象のデータが見つかりません'], 404);
         }
         $attendance->status = (int)$validated['status'];
         $attendance->detail = ((int)$validated['status'] === 2) ? $validated['detail'] : null;
@@ -79,13 +79,10 @@ class AttendanceController extends Controller
     {
         $userId = auth()->id();
         $attendance = Attendance::find($attendanceId);
+        if (!$attendance) {
+            return response()->json(['message' => 'すでに出席状態です'],404);
+        }
         $this->authorize('update', $attendance);
-        if (!$attendance) {
-            return response()->json(['message' => '更新対象のデータが見つかりません'], 404);
-        }
-        if (!$attendance) {
-            return response()->json(['message' => 'すでに出席状態です']);
-        }
         if($this->isPastDeadline($attendance->calendar_id)){
             return response()->json(['message' => 'アプリでの登録可能時刻を過ぎています。直接園にお電話ください。'],422);
         }

@@ -15,7 +15,7 @@ interface AttendanceDetailModalProps {
   onClose: () => void;
   onSave: (
     updatedData: AttendanceRecord & { working?: number },
-  ) => Promise<Response | undefined>; // 💡 型に working を追加
+  ) => Promise<Response | undefined>;
   onSuccess: () => void;
 }
 
@@ -81,31 +81,21 @@ export default function AttendanceEditModal({
             onDetailChange={setDetail}
             name={String(attendance.id)}
           />
-
-          {/* ------------------------------------------------------------- */}
-          {/* 🔴 バリデーションエラー表示エリア（最適化版） */}
-          {/* ------------------------------------------------------------- */}
-          {/* ① detail（詳細未入力など）のエラー */}
           {formErrors.detail && formErrors.detail.length > 0 && (
             <div className="p-3 rounded-lg text-sm font-medium border bg-red-50 border-red-200 text-red-800 animate-in fade-in duration-200">
               {formErrors.detail[0]}
             </div>
           )}
-
-          {/* ② working（園休日チェックなど）のエラー */}
           {formErrors.working && formErrors.working.length > 0 && (
             <div className="p-3 rounded-lg text-sm font-medium border bg-red-50 border-red-200 text-red-800 animate-in fade-in duration-200">
               {formErrors.working[0]}
             </div>
           )}
-
-          {/* ③ global などの汎用エラー（保険用） */}
           {formErrors.global && formErrors.global.length > 0 && (
             <div className="p-3 rounded-lg text-sm font-medium border bg-red-50 border-red-200 text-red-800 animate-in fade-in duration-200">
               {formErrors.global[0]}
             </div>
           )}
-          {/* ------------------------------------------------------------- */}
 
           {/* タイムスタンプ関係 */}
           {attendance.editor_id !== null &&
@@ -139,13 +129,11 @@ export default function AttendanceEditModal({
           <Button
             onClick={async () => {
               try {
-                // 💡 元々のデータに入っている、またはカレンダーに紐づくworking状態をそのまま添付して送信
-                // （※もし attendance.calendar.working などのデータがあればそちら、なければデフォルト1など）
                 const response = await onSave?.({
                   ...attendance,
                   status: status,
                   detail: status === 2 ? detail : null,
-                  working: working, // 👈 🔴 送信データにworkingを混ぜる！
+                  working: working,
                 });
 
                 if (response && response.ok) {
