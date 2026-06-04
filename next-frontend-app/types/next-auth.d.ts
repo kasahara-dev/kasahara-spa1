@@ -2,6 +2,7 @@ import "next-auth";
 
 declare module "next-auth" {
   interface Session {
+    role?: "staff" | "parent";
     accessToken?: string;
     user: {
       id?: string;

@@ -16,7 +16,7 @@ export default function Header() {
   const userNameWithTitle = session?.user?.name + 'さん';
   const staffNavItems = [
     { label: "Top", href: "/staff" },
-    { label: "メッセージ", href: "/staff/message" },
+    { label: "メッセージ", href: "/staff/messages" },
     { label: "連絡先一覧", href: "/staff/profile" },
   ];
   const pathname = usePathname();
