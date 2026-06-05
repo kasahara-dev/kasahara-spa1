@@ -6,6 +6,7 @@ import { AttendanceRecord } from "@/../../types/calendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/components/ui/card"
 import { ja } from "date-fns/locale";
+import AttendanceBadge from "../AttendanceBadge";
 
 interface AttendanceListCardProps {
   date: Date | undefined;
@@ -71,9 +72,7 @@ export default function AttendanceListCard({
                 onClick={() => onAttendanceClick(item)}
               >
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700">
-                    お休み
-                  </span>
+                  <AttendanceBadge type={1} />
                   <h4 className="text-sm font-bold text-slate-800">
                     {item.user.name}
                   </h4>
@@ -87,9 +86,7 @@ export default function AttendanceListCard({
                 onClick={() => onAttendanceClick(item)}
               >
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-700">
-                    遅刻その他
-                  </span>
+                  <AttendanceBadge type={2} />
                   <h4 className="text-sm font-bold text-slate-800">
                     {item.user.name}
                   </h4>

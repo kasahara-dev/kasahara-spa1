@@ -82,7 +82,7 @@ class AttendanceController extends Controller
         if (!$attendance) {
             return response()->json(['message' => 'すでに出席状態です'],404);
         }
-        $this->authorize('update', $attendance);
+        $this->authorize('delete', $attendance);
         if($this->isPastDeadline($attendance->calendar_id)){
             return response()->json(['message' => 'アプリでの登録可能時刻を過ぎています。直接園にお電話ください。'],422);
         }

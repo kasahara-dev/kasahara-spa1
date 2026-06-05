@@ -7,6 +7,7 @@ import { ja } from "date-fns/locale";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import AttendanceStatusSelector from "@/components/AttendanceStatusSelector";
+import AttendanceBadge from "./AttendanceBadge";
 
 const isPastDeadline = (
   targetDateStr: string,
@@ -72,17 +73,6 @@ export function AttendanceModal({
   const [formDetail, setFormDetail] = React.useState<string>(
     attendance?.detail ?? "",
   );
-  let statusText = "出席";
-  let statusColor = "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30";
-  if (attendance) {
-    if (attendance.status === 1) {
-      statusText = "お休み";
-      statusColor = "text-red-600 bg-red-50 dark:bg-red-950/30";
-    } else if (attendance.status === 2) {
-      statusText = "遅刻その他";
-      statusColor = "text-amber-600 bg-amber-50 dark:bg-amber-950/30";
-    }
-  }
 
   return (
     <div className="fixed inset-x-0 bottom-0 top-[64px] z-40 bg-parent-soft overflow-y-auto bg-black/10 backup-blur-sm">
@@ -100,11 +90,7 @@ export function AttendanceModal({
             {formattedDate}の出欠予定
           </h3>
           <div>
-            <span
-              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusColor}`}
-            >
-              {statusText}
-            </span>
+            <AttendanceBadge type={attendance?.status || 0} />
             <p className="mt-2 text-sm text-muted-foreground">
               {attendance?.detail}
             </p>
@@ -120,7 +106,7 @@ export function AttendanceModal({
                 value={formStatus}
                 onChange={(nextStatus) => {
                   setFormStatus(nextStatus);
-                  onStatusChange?.(); // 親から渡されたメッセージを消す関数を呼び出す
+                  onStatusChange?.();
                 }}
                 detail={formDetail}
                 onDetailChange={setFormDetail}
