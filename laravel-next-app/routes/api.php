@@ -23,7 +23,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/attendance',[StaffAttendanceController::class,'store']);
         Route::patch('/attendance/{attendance_id}',[StaffAttendanceController::class,'update']);
         Route::delete('/attendance/{attendance_id}',[StaffAttendanceController::class,'destroy']);
-        Route::get('staff/messages',  [StaffMessageController::class,'index']);
+        Route::get('/messages',  [StaffMessageController::class,'index']);
         Route::post('/messages',  [StaffMessageController::class,'store']);
         Route::get('/messages/{message_id}/download', [StaffMessageController::class, 'download']);
     });

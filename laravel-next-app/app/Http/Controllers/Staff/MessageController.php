@@ -8,6 +8,7 @@ use App\Http\Requests\MessageRequest;
 use App\Models\Parent_message;
 use App\Models\Staff_message;
 use App\Models\User;
+use App\Models\Group;
 use Illuminate\Support\Str;
 use App\Models\StaffMessage;
 use Illuminate\Support\Facades\Storage;
@@ -20,26 +21,38 @@ class MessageController extends Controller
      */
     public function index()
     {
-        // グループ紐づけ必要！
-        $sendMessages=StaffMessage::orderBy('created_at','desc')->get();
-        $receivedMessages = ParentMessage::with(['user', 'child.schoolClass'])->orderBy('created_at','desc')->get();
-        return response()->json(["send_messages"=>$sendMessages,"received_messages"=>$receivedMessages]);
+        $sendMessages = StaffMessage::getFormattedMessages();
+        $receivedMessages = ParentMessage::getFormattedMessages();
+        return response()->json([
+            "send_messages"     => $sendMessages,
+            "received_messages" => $receivedMessages
+        ]);
     }
     public function download(Request $request, $id)
     {
         $message = StaffMessage::findOrFail($id);
-        $this->authorize('view', $message);
+    
         $filePath = $message->file_path;
+
+        if (empty($filePath)) {
+            abort(404, '添付ファイルはありません。');
+        }
+
         $absolutePath = storage_path('app/public/' . $filePath);
 
         if (!file_exists($absolutePath)) {
             $absolutePath = public_path($filePath);
         }
+    
         if (!file_exists($absolutePath)) {
-            abort(404, 'ファイルが存在しません。');
+            abort(404, 'ファイルがサーバー上に存在しません。');
         }
 
-        return response()->download($absolutePath, basename($filePath));
+        $fileName = basename($filePath); 
+    
+        return response()->download($absolutePath, $fileName, [
+        'Content-Type' => mime_content_type($absolutePath),
+        ]);
     }
 
     /**
