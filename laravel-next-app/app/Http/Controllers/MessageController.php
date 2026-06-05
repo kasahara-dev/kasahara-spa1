@@ -30,16 +30,23 @@ class MessageController extends Controller
         $message = StaffMessage::findOrFail($id);
         $this->authorize('view', $message);
         $filePath = $message->file_path;
+        if (empty($filePath)) {
+            abort(404, '添付ファイルはありません。');
+        }
+
         $absolutePath = storage_path('app/public/' . $filePath);
 
         if (!file_exists($absolutePath)) {
             $absolutePath = public_path($filePath);
         }
         if (!file_exists($absolutePath)) {
-            abort(404, 'ファイルが存在しません。');
+            abort(404, 'ファイルがサーバー上に存在しません。');
         }
 
-        return response()->download($absolutePath, basename($filePath));
+        $fileName = basename($filePath); 
+        return response()->download($absolutePath, $fileName, [
+            'Content-Type' => mime_content_type($absolutePath),
+        ]);
     }
 
     /**
