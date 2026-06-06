@@ -72,7 +72,7 @@ export default function Home() {
   };
 
   return (
-    <main className="w-full p-6 space-y-6 relative">
+    <main className="w-full p-6 pb-20 space-y-6 relative">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         <div className="flex flex-col space-y-6">
           {/* 日付選択セクション */}

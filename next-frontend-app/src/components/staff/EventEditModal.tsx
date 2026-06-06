@@ -129,7 +129,7 @@ export default function EventEditModal({
             キャンセル
           </Button>
           <Button onClick={handleSave} disabled={isSubmitting}>
-            {isSubmitting ? "保存中..." : "保存する"}
+            {isSubmitting ? "保存中..." : "変更を保存する"}
           </Button>
         </div>
       </div>

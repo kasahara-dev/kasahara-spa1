@@ -22,7 +22,7 @@ export default function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="bg-header">
+    <header className="bg-header w-[100vw]">
       <div className="max-w-7xl mx-auto px-4 py-2 flex justify-between items-center">
         <Link
           href={session?.role === "staff" ? "/staff" : "/"}

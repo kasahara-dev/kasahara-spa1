@@ -23,9 +23,11 @@ class MessageController extends Controller
     {
         $sendMessages = StaffMessage::getFormattedMessages();
         $receivedMessages = ParentMessage::getFormattedMessages();
+        $groups = Group::with(['users'])->get();
         return response()->json([
             "send_messages"     => $sendMessages,
-            "received_messages" => $receivedMessages
+            "received_messages" => $receivedMessages,
+            "groups" => $groups,
         ]);
     }
     public function download(Request $request, $id)

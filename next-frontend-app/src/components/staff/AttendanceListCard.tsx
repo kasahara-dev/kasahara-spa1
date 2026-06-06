@@ -60,7 +60,7 @@ export default function AttendanceListCard({
         {absentStudents.length === 0 && lateStudents.length === 0 ? (
           <div className="h-full flex items-center justify-center text-slate-400 text-sm italic border border-dashed rounded-xl p-8">
             {working == 1 && date
-              ? `${format(date, "M月d日")} の欠席・遅刻児童の詳細がここに並びます`
+              ? `${format(date, "M月d日")} の欠席・遅刻その他は0件です`
               : working == 0 ? "園休日です" : "日付を選択してください"}
           </div>
         ) : (

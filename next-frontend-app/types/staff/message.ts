@@ -1,9 +1,15 @@
-export interface Group {
+export interface GroupOption {
   id: number;
   name: string;
   category: number;
+  users: UserOption[];
   created_at: string;
   updated_at: string;
+}
+
+export interface UserOption{
+  id: number;
+  name: string;
 }
 
 export interface StaffMessage {
@@ -32,4 +38,5 @@ export interface ParentMessage {
 export interface MessageApiResponse {
   send_messages: StaffMessage[];
   received_messages: ParentMessage[];
+  groups: GroupOption[];
 }

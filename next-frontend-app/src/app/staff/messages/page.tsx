@@ -7,10 +7,13 @@ import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import ReceivedMessageModal from "@/components/staff/ReceivedMessageModal";
 import SendMessageModal from "@/components/staff/SendMessageModal";
+import CreateMessageModal from "@/components/staff/CreateMessageModal";
 import {
   MessageApiResponse,
   StaffMessage,
   ParentMessage,
+  GroupOption,
+  UserOption,
 } from "@/../types/staff/message";
 import {
   Card,
@@ -32,6 +35,8 @@ export default function MessagePage() {
   const [selectedReceivedMessage, setSelectedReceivedMessage] = useState<ParentMessage | null>(
     null,
   );
+  const [isCreateOpen, setIsCreateOpen] = useState<boolean>(false);
+  const [groups, setGroups] = useState<GroupOption[]>([]);
 
   useEffect(() => {
     if (!token) return;
@@ -46,6 +51,7 @@ export default function MessagePage() {
       .then((data) => {
         setSendMessages(data.send_messages || []);
         setReceivedMessages(data.received_messages || []);
+        setGroups(data.groups || []);
       })
       .catch((err) => console.error(err));
   }, [token]);
@@ -95,7 +101,12 @@ export default function MessagePage() {
               <h2 className="text-lg font-semibold text-primary flex items-center gap-2">
                 送信履歴
               </h2>
-              <Button className="px-4 py-2">新規作成</Button>
+              <Button
+                className="px-4 py-2"
+                onClick={() => setIsCreateOpen(true)}
+              >
+                新規作成
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="max-h-[350px] overflow-y-auto space-y-2 pr-4 pt-2 pb-6 px-6">
@@ -123,6 +134,13 @@ export default function MessagePage() {
               <SendMessageModal
                 message={selectedSendMessage}
                 onClose={() => setSelectedSendMessage(null)}
+                token={token}
+              />
+            )}
+            {isCreateOpen && (
+              <CreateMessageModal
+                groups={groups}
+                onClose={() => setIsCreateOpen(false)}
                 token={token}
               />
             )}
