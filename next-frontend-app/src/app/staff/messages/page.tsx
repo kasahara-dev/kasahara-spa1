@@ -37,8 +37,12 @@ export default function MessagePage() {
   const [groups, setGroups] = useState<GroupOption[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
+
+  const fetchMessages = React.useCallback(() => {
     if (!token) return;
+
+    // ※ 新規送信後のリロード時はローディングアニメーションを挟まないように、
+    // 最初の1回目や、必要に応じて setIsLoading をコントロールしてもOKです
     fetch("/api/proxy/staff/messages", {
       method: "GET",
       headers: {
@@ -54,9 +58,13 @@ export default function MessagePage() {
       })
       .catch((err) => console.error(err))
       .finally(() => {
-        setIsLoading(false); // 💡 成功しても失敗しても、終わったら読み込み中を解除！
+        setIsLoading(false);
       });
   }, [token]);
+
+  useEffect(() => {
+    fetchMessages();
+  }, [fetchMessages]);
 
   if (!session) return <div className="p-8">認証中...</div>;
 
@@ -166,6 +174,7 @@ export default function MessagePage() {
                 groups={groups}
                 onClose={() => setIsCreateOpen(false)}
                 token={token}
+                onSuccess={fetchMessages}
               />
             )}
           </CardContent>

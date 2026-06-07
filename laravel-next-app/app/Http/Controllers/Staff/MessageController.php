@@ -77,6 +77,8 @@ class MessageController extends Controller
             'detail'  => $validated['detail'],
             'file_path' => $filePath,
         ]);
+        // グループの場合？個人の場合？
+        // みじっそう
         Mail::to('test-parent@example.com')->send(new StaffMessageMail($message));
         return response()->json([
             'success' => true,

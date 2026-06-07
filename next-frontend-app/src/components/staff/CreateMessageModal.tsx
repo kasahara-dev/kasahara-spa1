@@ -32,11 +32,13 @@ interface CreateMessageModalProps {
   onClose: () => void;
   token: string | undefined;
   groups: GroupOption[];
+  onSuccess?: () => void;
 }
 
 export default function CreateMessageModal({
   onClose,
   token,
+  onSuccess,
   groups = [],
 }: CreateMessageModalProps) {
   const [selectedGroupId, setSelectedGroupId] = useState<string>(() => {
@@ -92,11 +94,18 @@ export default function CreateMessageModal({
       const data = await response.json();
 
       if (response.status === 201) {
-        setSuccessMessage("メッセージの送信とメール配信が完了しました！");
+        setSuccessMessage("メッセージを送信しました");
         setTitle("");
         setDetail("");
         setFile(null);
-        // 少し余韻を残してモーダルを閉じる場合はここに setTimeout など
+        setTimeout(() => {
+          // 💡 親から onSuccess が渡されていたら、画面データを最新に更新する
+          if (typeof onSuccess === "function") {
+            onSuccess();
+          }
+          onClose(); // モーダルを閉じる
+        }, 1500);
+
         return;
       }
 
@@ -125,20 +134,6 @@ export default function CreateMessageModal({
       </div>
       <div className="px-6 max-w-2xl mx-auto pb-20">
         <Card className="shadow-sm border-muted p-4 space-y-4">
-          {/* 💡 成功メッセージの表示 */}
-          {successMessage && (
-            <div className="p-3 bg-blue-50 text-blue-700 rounded text-sm font-medium">
-              {successMessage}
-            </div>
-          )}
-
-          {/* 💡 グローバルエラーの表示 */}
-          {formErrors.global && (
-            <div className="p-3 bg-red-50 text-red-700 rounded text-sm font-medium">
-              {formErrors.global[0]}
-            </div>
-          )}
-
           <div className="flex gap-4">
             <div>
               <Label className="text-primary" htmlFor="group-select">
@@ -277,7 +272,19 @@ export default function CreateMessageModal({
             )}
           </div>
         </Card>
+        <div className="space-y-2 mt-4">
+          {successMessage && (
+            <div className="p-3 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium text-center animate-fade-in">
+              {successMessage}
+            </div>
+          )}
 
+          {formErrors.global && (
+            <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm font-medium text-center">
+              {formErrors.global[0]}
+            </div>
+          )}
+        </div>
         <div className="flex justify-center pt-3 gap-8">
           <Button
             className="bg-muted-primary text-primary hover:bg-slate-200"
