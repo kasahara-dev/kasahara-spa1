@@ -16,7 +16,7 @@ return new class extends Migration
             $table->tinyInteger('to_type')->comment('0:個人、1:グループ');
             $table->unsignedBigInteger('to');
             $table->string('title');
-            $table->text('detail');
+            $table->string('detail',400);
             $table->string('file_path')->nullable();
             $table->timestamps();
         });

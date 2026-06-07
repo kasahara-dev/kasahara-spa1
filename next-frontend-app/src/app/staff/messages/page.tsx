@@ -22,21 +22,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Paperclip } from "lucide-react";
+import { Paperclip, Loader2 } from "lucide-react";
 
 export default function MessagePage() {
   const { data: session } = useSession();
   const token = session?.accessToken;
   const [sendMessages, setSendMessages] = useState<StaffMessage[]>([]);
-  const [selectedSendMessage, setSelectedSendMessage] = useState<StaffMessage | null>(
-    null,
-  );
+  const [selectedSendMessage, setSelectedSendMessage] =
+    useState<StaffMessage | null>(null);
   const [receivedMessages, setReceivedMessages] = useState<ParentMessage[]>([]);
-  const [selectedReceivedMessage, setSelectedReceivedMessage] = useState<ParentMessage | null>(
-    null,
-  );
+  const [selectedReceivedMessage, setSelectedReceivedMessage] =
+    useState<ParentMessage | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState<boolean>(false);
   const [groups, setGroups] = useState<GroupOption[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (!token) return;
@@ -53,7 +52,10 @@ export default function MessagePage() {
         setReceivedMessages(data.received_messages || []);
         setGroups(data.groups || []);
       })
-      .catch((err) => console.error(err));
+      .catch((err) => console.error(err))
+      .finally(() => {
+        setIsLoading(false); // 💡 成功しても失敗しても、終わったら読み込み中を解除！
+      });
   }, [token]);
 
   if (!session) return <div className="p-8">認証中...</div>;
@@ -71,22 +73,33 @@ export default function MessagePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="max-h-[350px] overflow-y-auto space-y-2 pr-4 pt-2 pb-6 px-6">
-            {receivedMessages.map((msg) => (
-              <Card
-                key={msg.id}
-                className="p-3 hover:bg-muted cursor-pointer transition-colors shadow-none"
-                onClick={() => setSelectedReceivedMessage(msg)}
-              >
-                <div className="flex px-2 items-center">
-                  <span className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">
-                    {format(msg.created_at, "yyyy/MM/dd HH:mm")}
-                  </span>
-                  <span className="ml-2 truncate">{msg.sender_name}</span>
-                  <span className="truncate">({msg.group_names})</span>
-                  <span className="ml-2 truncate">{msg.detail}</span>
-                </div>
-              </Card>
-            ))}
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8 text-muted-foreground gap-2 text-sm">
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                読み込み中...
+              </div>
+            ) : receivedMessages.length === 0 ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                受信履歴はありません
+              </div>
+            ) : (
+              receivedMessages.map((msg) => (
+                <Card
+                  key={msg.id}
+                  className="p-3 hover:bg-muted cursor-pointer transition-colors shadow-none"
+                  onClick={() => setSelectedReceivedMessage(msg)}
+                >
+                  <div className="flex px-2 items-center">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">
+                      {format(msg.created_at, "yyyy/MM/dd HH:mm")}
+                    </span>
+                    <span className="ml-2 truncate">{msg.sender_name}</span>
+                    <span className="truncate">({msg.group_names})</span>
+                    <span className="ml-2 truncate">{msg.detail}</span>
+                  </div>
+                </Card>
+              ))
+            )}
             {selectedReceivedMessage && (
               <ReceivedMessageModal
                 message={selectedReceivedMessage}
@@ -110,26 +123,37 @@ export default function MessagePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="max-h-[350px] overflow-y-auto space-y-2 pr-4 pt-2 pb-6 px-6">
-            {sendMessages.map((msg) => (
-              <Card
-                key={msg.id}
-                className="p-3 hover:bg-muted cursor-pointer transition-colors shadow-none"
-                onClick={() => setSelectedSendMessage(msg)}
-              >
-                <div className="flex px-2 items-center">
-                  <span className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">
-                    {format(msg.created_at, "yyyy/MM/dd HH:mm")}
-                  </span>
-                  <span className="ml-2">
-                    {msg.to_type === 0 ? msg.receiver_name : msg.group_names}
-                  </span>
-                  <span className="ml-2 truncate">{msg.title}</span>
-                  {msg.file_path ? (
-                    <Paperclip className="w-3.5 h-3.5 ml-1 text-muted-foreground" />
-                  ) : null}
-                </div>
-              </Card>
-            ))}
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8 text-muted-foreground gap-2 text-sm">
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                読み込み中...
+              </div>
+            ) : sendMessages.length === 0 ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                送信履歴はありません
+              </div>
+            ) : (
+              sendMessages.map((msg) => (
+                <Card
+                  key={msg.id}
+                  className="p-3 hover:bg-muted cursor-pointer transition-colors shadow-none"
+                  onClick={() => setSelectedSendMessage(msg)}
+                >
+                  <div className="flex px-2 items-center">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">
+                      {format(msg.created_at, "yyyy/MM/dd HH:mm")}
+                    </span>
+                    <span className="ml-2">
+                      {msg.to_type === 0 ? msg.receiver_name : msg.group_names}
+                    </span>
+                    <span className="ml-2 truncate">{msg.title}</span>
+                    {msg.file_path ? (
+                      <Paperclip className="w-3.5 h-3.5 ml-1 text-muted-foreground" />
+                    ) : null}
+                  </div>
+                </Card>
+              ))
+            )}
             {selectedSendMessage && (
               <SendMessageModal
                 message={selectedSendMessage}

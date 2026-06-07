@@ -14,7 +14,7 @@ class GroupSeeder extends Seeder
     public function run(): void
     {
         Group::create([
-            'name' => '全員',
+            'name' => '全体',
             'category' => '0',
         ]);
         Group::create([

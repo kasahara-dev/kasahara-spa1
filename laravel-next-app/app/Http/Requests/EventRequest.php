@@ -26,7 +26,7 @@ class EventRequest extends FormRequest
 
     return [
         'calendar_id' => $isUpdate ? ['sometimes', 'integer', 'exists:calendars,id'] : ['required', 'integer', 'exists:calendars,id'],
-        'title'       => ['required', 'string', 'max:200'],
+        'title'       => ['required', 'string', 'max:50'],
         'detail'      => ['required', 'string', 'max:400'],
         'editor_id'   => ['sometimes', 'integer', 'exists:users,id'],
     ];
@@ -35,7 +35,7 @@ class EventRequest extends FormRequest
     {
         return [
             'calendar_id' => '不正な日付です',
-            'title' => 'タイトルは200文字以内で入力してください',
+            'title' => 'タイトルは50文字以内で入力してください',
             'detail' => '本文は400文字以内で入力してください',
             'editor_id' => '不正なユーザーです。',
         ];

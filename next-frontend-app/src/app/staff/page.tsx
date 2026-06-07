@@ -11,6 +11,7 @@ import AttendanceEditModal from "@/components/staff/AttendanceEditModal";
 import AttendanceCreateModal from "@/components/staff/AttendanceCreateModal";
 import { useCalendarData } from "@/hooks/staff/useCalendarData";
 import { AttendanceRecord, EventItem } from "@/../../types/calendar";
+import { Loader2 } from "lucide-react";
 
 export default function Home() {
   const [date, setDate] = React.useState<Date | undefined>(new Date());
@@ -79,7 +80,8 @@ export default function Home() {
           <div className="bg-white p-5 rounded-xl shadow-sm border">
             <h2 className="text-primary font-bold px-2">日付選択</h2>
             {loading || !staffData ? (
-              <div className="h-64 flex items-center justify-center text-sm text-slate-400">
+              <div className="flex items-center justify-center py-8 text-muted-foreground gap-2 text-sm">
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
                 読み込み中...
               </div>
             ) : (
@@ -127,7 +129,10 @@ export default function Home() {
           attendance={selectedAttendance}
           date={date}
           working={working}
-          onClose={() => { setSelectedAttendance(null); setFormErrors({}); }}
+          onClose={() => {
+            setSelectedAttendance(null);
+            setFormErrors({});
+          }}
           formErrors={formErrors}
           onSave={handleSaveAttendance}
           onSuccess={refreshData}
@@ -143,7 +148,10 @@ export default function Home() {
           calendarId={selectedDayData.id}
           formErrors={formErrors}
           working={selectedDayData.working}
-          onClose={() => { setIsCreateModalOpen(false); setFormErrors({}); }}
+          onClose={() => {
+            setIsCreateModalOpen(false);
+            setFormErrors({});
+          }}
           onSave={handleCreateAttendance}
         />
       )}

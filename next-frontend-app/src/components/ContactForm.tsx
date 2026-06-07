@@ -79,6 +79,7 @@ export default function ContactForm({ token }: ContactFormProps) {
               value={detail}
               onChange={(e) => setDetail(e.target.value)}
               required
+              maxLength={400}
               className="resize-none focus-visible:ring-primary text-sm bg-muted/20 h-48"
             />
             {successMessage && (

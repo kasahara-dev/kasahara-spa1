@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -24,12 +24,14 @@ import { Textarea } from "@/components/ui/textarea";
 interface GroupOption {
   id: string | number;
   name: string;
+  category: number;
   users: UserOption[];
 }
 
 interface UserOption {
   id: string | number;
   name: string;
+  group_summary?: string;
 }
 
 interface CreateMessageModalProps {
@@ -43,13 +45,19 @@ export default function CreateMessageModal({
   token,
   groups = [],
 }: CreateMessageModalProps) {
-  const [selectedGroupId, setSelectedGroupId] = useState<string>("0");
+  const [selectedGroupId, setSelectedGroupId] = useState<string>(() => {
+    const defaultGroup = groups.find((g) => g.category === 0);
+    if (defaultGroup) {
+      return String(defaultGroup.id);
+    }
+    return groups.length > 0 ? String(groups[0].id) : "";
+  });
   const [selectedPersonId, setSelectedPersonId] = useState<string>("0");
+
   const currentGroup = groups.find((g) => String(g.id) === selectedGroupId);
 
-  // そのグループに属するユーザー一覧（なければ空配列）
-  // ※もしグループが「全体("0")」なら、全グループのユーザーを表示したい場合は後述
   const displayUsers = currentGroup ? currentGroup.users : [];
+
   return (
     <div className="fixed inset-0 top-[64px] z-40 bg-staff-soft overflow-y-auto">
       <div className="sticky top-0 z-10 bg-staff-soft">
@@ -61,14 +69,14 @@ export default function CreateMessageModal({
         <Card className="shadow-sm border-muted px-4">
           <div className="flex gap-4">
             <div>
-              <Label className="text-muted-foreground" htmlFor="group-select">
+              <Label className="text-primary" htmlFor="group-select">
                 宛先グループ選択
               </Label>
               <Select
                 value={selectedGroupId}
                 onValueChange={(val) => {
                   setSelectedGroupId(val);
-                  setSelectedPersonId("0"); // グループが変わったら個人選択はリセット
+                  setSelectedPersonId("0");
                 }}
               >
                 <SelectTrigger id="group-select" className="w-[180px]">
@@ -76,7 +84,6 @@ export default function CreateMessageModal({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="0">全体</SelectItem>
                     {groups.map((g) => (
                       <SelectItem key={g.id} value={String(g.id)}>
                         {g.name}
@@ -87,7 +94,7 @@ export default function CreateMessageModal({
               </Select>
             </div>
             <div>
-              <Label className="text-muted-foreground" htmlFor="person-select">
+              <Label className="text-primary" htmlFor="person-select">
                 宛先個人選択
               </Label>
               <Select
@@ -111,28 +118,54 @@ export default function CreateMessageModal({
             </div>
           </div>
           <div>
-            <h2 className="text-muted-foreground">選択中宛先</h2>
-            <div>テスト、テスト、テスト</div>
+            <h2 className="text-primary">選択中宛先</h2>
+            <div>
+              {(() => {
+                if (selectedPersonId === "0") {
+                  if (displayUsers.length === 0) return "宛先がありません";
+                  return displayUsers.map((u: UserOption) => u.name).join("、");
+                }
+                const selectedUser = displayUsers.find(
+                  (u: UserOption) => String(u.id) === selectedPersonId,
+                );
+                if (selectedUser) {
+                  return selectedUser.group_summary
+                    ? `${selectedUser.name} (${selectedUser.group_summary})`
+                    : selectedUser.name;
+                }
+                return "";
+              })()}
+            </div>
+            {displayUsers.length > 0 && (
+              <div className="text-xs text-muted-foreground font-normal mt-0.5">
+                計 {selectedPersonId === "0" ? displayUsers.length : 1} 件
+              </div>
+            )}
           </div>
           <hr />
           <div>
-            <Label className="text-muted-foreground" htmlFor="title">
+            <Label className="text-primary" htmlFor="title">
               タイトル
             </Label>
-            <Input id="title" placeholder="保護者会"></Input>
+            <Input
+              id="title"
+              placeholder="タイトルを50字以内で入力してください"
+              maxLength={50}
+            ></Input>
           </div>
           <div>
-            <Label className="text-muted-foreground" htmlFor="detail">
+            <Label className="text-primary" htmlFor="detail">
               本文
             </Label>
             <Textarea
               id="detail"
-              placeholder="14時開始予定です。スリッパをお持ちください。"
+              placeholder="本文を400字以内で入力してください"
               className="min-h-40"
+              maxLength={400}
             ></Textarea>
           </div>
           <div>
-            <Label className="text-muted-foreground" htmlFor="file">
+            <Label className="text-primary" htmlFor="file">
               添付ファイル
             </Label>
             <Input id="file" type="file"></Input>

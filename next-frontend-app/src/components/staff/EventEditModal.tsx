@@ -1,5 +1,3 @@
-// 📄 components/staff/EventEditModal.tsx
-
 "use client";
 
 import * as React from "react";
@@ -36,10 +34,34 @@ export default function EventEditModal({
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const handleSave = async () => {
+    // 💡 1. 送信前にフロント側でトリム（空白除去）してチェック！
+    const trimmedTitle = title.trim();
+    const trimmedDetail = detail.trim();
+    const localErrors: Record<string, string[]> = {};
+
+    if (!trimmedTitle) {
+      localErrors.title = ["タイトルは必須入力です。"];
+    }
+    if (!trimmedDetail) {
+      localErrors.detail = ["詳細は必須入力です。"];
+    }
+
+    // 💡 2. エラーが1つでもあれば、通信せずにその場で赤い文字を表示して終了！
+    if (Object.keys(localErrors).length > 0) {
+      setFormErrors(localErrors);
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       setFormErrors({});
-      const response = await onSave({ editingEvent, title, detail });
+
+      // 💡 3. トリム済みの綺麗なデータを親の関数に渡す
+      const response = await onSave({
+        editingEvent,
+        title: trimmedTitle,
+        detail: trimmedDetail,
+      });
 
       if (response.status === 200 || response.status === 201) {
         if (typeof onSuccess === "function") {
@@ -48,7 +70,6 @@ export default function EventEditModal({
         onClose();
         return;
       }
-
       if (response.status === 422) {
         const errorData = await response.json();
         setFormErrors(errorData.errors || {});
@@ -58,7 +79,9 @@ export default function EventEditModal({
     } catch (error) {
       console.error("保存エラー:", error);
       setFormErrors({
-        global: ["保存に失敗しました。時間を置いて再度お試しください。"],
+        global: [
+          "保存に失敗しました。入力内容を確認するか、時間を置いて再度お試しください。",
+        ],
       });
     } finally {
       setIsSubmitting(false);
@@ -77,6 +100,8 @@ export default function EventEditModal({
             <label className="text-xs font-bold text-slate-600">タイトル</label>
             <Input
               value={title}
+              placeholder="イベントタイトルを50字以内で入力してください"
+              maxLength={50}
               onChange={(e) => setTitle(e.target.value)}
               disabled={isSubmitting}
             />
@@ -92,6 +117,8 @@ export default function EventEditModal({
               onChange={(e) => setDetail(e.target.value)}
               disabled={isSubmitting}
               className="min-h-[120px] resize-none"
+              maxLength={400}
+              placeholder="イベント詳細を400字以内で入力してください"
             />
             {formErrors.detail && (
               <p className="text-xs text-red-500 mt-1">
@@ -129,7 +156,7 @@ export default function EventEditModal({
             キャンセル
           </Button>
           <Button onClick={handleSave} disabled={isSubmitting}>
-            {isSubmitting ? "保存中..." : "変更を保存する"}
+            {isSubmitting ? "保存中..." : (editingEvent.id === 0 ? "予定を登録する" : "変更を保存する")}
           </Button>
         </div>
       </div>

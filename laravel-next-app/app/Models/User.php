@@ -30,6 +30,7 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    protected $appends = ['group_summary'];
     public function attendances(){
         return $this->hasMany('App\Models\Attendance');
     }
@@ -99,5 +100,9 @@ class User extends Authenticatable
         return $b['created_at'] <=> $a['created_at'];
     });
         return $messages;
+    }
+    public function getGroupSummaryAttribute()
+    {
+        return $this->groups->where('category', '!=', 0)->pluck('name')->implode(' '); 
     }
 }
