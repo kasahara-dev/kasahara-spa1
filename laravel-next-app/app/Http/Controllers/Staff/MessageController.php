@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Staff;
 
 use App\Models\ParentMessage;
 use Illuminate\Http\Request;
-use App\Http\Requests\MessageRequest;
+use App\Http\Requests\Staff\MessageRequest as StaffMessageRequest;
 use App\Models\Parent_message;
 use App\Models\Staff_message;
 use App\Models\User;
@@ -13,6 +13,8 @@ use Illuminate\Support\Str;
 use App\Models\StaffMessage;
 use Illuminate\Support\Facades\Storage;
 use PhpParser\NodeVisitor\ParentConnectingVisitor;
+use App\Mail\StaffMessageMail;
+use Illuminate\Support\Facades\Mail;
 
 class MessageController extends Controller
 {
@@ -60,16 +62,25 @@ class MessageController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(MessageRequest $request)
+    public function store(StaffMessageRequest $request)
     {
         $validated = $request->validated();
-        $message = ParentMessage::create([
-            'from' => auth()->id(),
+        $filePath = null;
+        if ($request->hasFile('file_path')) {
+        $path = $request->file('file_path')->store('messages', 'public');
+        $filePath = $path;
+    }
+        $message = StaffMessage::create([
+            'to_type' => $validated['to_type'],
+            'to' => $validated['to'],
+            'title' => $validated['title'],
             'detail'  => $validated['detail'],
+            'file_path' => $filePath,
         ]);
+        Mail::to('test-parent@example.com')->send(new StaffMessageMail($message));
         return response()->json([
             'success' => true,
-            'message' => 'お問い合わせを送信しました。',
+            'message' => 'メッセージを送信しました。',
         ], 201);
     }
 

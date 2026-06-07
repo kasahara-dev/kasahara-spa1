@@ -33,8 +33,9 @@ class MessageRequest extends FormRequest
     public function messages(): array
     {
         return [
-        'title.max'       => 'タイトルは50文字以内で入力してください。',
-        'detail.max'      => '本文は400文字以内で入力してください。長い案内はファイルを添付してください。',
+        'title'       => 'タイトルを50文字以内で入力してください。',
+        'detail.required'      => '本文を400文字以内で入力してください。',
+        'detail.max'      => '本文を400文字以内で入力してください。長い案内はファイルを添付してください。',
         'file_path.file'  => 'アップロードされたものはファイルではありません。',
         'file_path.mimes' => '添付できるファイルは PDF, JPG, JPEG, PNG 形式のみです。',
         'file_path.max'   => 'ファイルサイズが大きすぎます。5MB以内のファイルを添付してください。',
