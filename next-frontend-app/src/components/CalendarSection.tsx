@@ -187,7 +187,7 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
 
     setSubmitMessage("");
     setSubmitMessageType("");
-    setDate(targetDate); // 選択状態を維持、または再セット
+    setDate(targetDate);
     setIsModalOpen(true);
   };
 

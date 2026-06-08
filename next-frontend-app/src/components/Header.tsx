@@ -17,7 +17,7 @@ export default function Header() {
   const staffNavItems = [
     { label: "Top", href: "/staff" },
     { label: "メッセージ", href: "/staff/messages" },
-    { label: "連絡先一覧", href: "/staff/profile" },
+    { label: "連絡先一覧", href: "/staff/groups" },
   ];
   const pathname = usePathname();
 
@@ -37,7 +37,7 @@ export default function Header() {
         {status === "authenticated" &&
           session?.role === "staff" &&
           pathname.startsWith("/staff") && (
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="md:flex items-center gap-1">
               {staffNavItems.map((item) => (
                 <Link
                   key={item.href}

@@ -216,7 +216,7 @@ export default function CreateMessageModal({
           {/* タイトル入力 */}
           <div>
             <Label className="text-primary" htmlFor="title">
-              タイトル（50字以内）
+              タイトル
             </Label>
             <Input
               id="title"
@@ -234,7 +234,7 @@ export default function CreateMessageModal({
           {/* 本文入力 */}
           <div>
             <Label className="text-primary" htmlFor="detail">
-              本文（400字以内）
+              本文
             </Label>
             <Textarea
               id="detail"

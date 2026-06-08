@@ -23,7 +23,7 @@ class GroupController extends Controller
      */
     public function index()
     {
-        $groups = Group::with(['users'])->get();
+        $groups = Group::with(['users.profile'])->get();
         return response()->json($groups);
     }
 
