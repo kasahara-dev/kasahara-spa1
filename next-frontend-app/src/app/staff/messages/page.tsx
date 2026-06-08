@@ -195,7 +195,7 @@ export default function MessagePage() {
                       {format(msg.created_at, "yyyy/MM/dd HH:mm")}
                     </span>
                     <span className="ml-2 truncate">
-                      {msg.to_type === 0 ? msg.receiver_name + "(" + msg.group_names + ")" : msg.group_names}
+                      {msg.to_type === 0 ? msg.receiver_name : msg.group_names}
                     </span>
                     <span className="ml-2 truncate">{msg.title}</span>
                     {msg.file_path ? (

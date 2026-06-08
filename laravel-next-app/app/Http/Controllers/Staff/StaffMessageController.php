@@ -71,9 +71,30 @@ class StaffMessageController extends Controller
             'detail'  => $validated['detail'],
             'file_path' => $filePath,
         ]);
-        // グループの場合？個人の場合？
-        // みじっそう
-        Mail::to('test-parent@example.com')->send(new StaffMessageMail($message));
+        if($validated['to_type'] == 0){
+            $users = User::where('id', $validated['to'])->get();
+        }else{
+            $group = Group::find($validated['to']);
+            $users = $group ? $group->users()->get() : [];
+        }
+        $emails = [];
+        foreach($users as $user){
+            if (!$user->profile) {
+                continue;
+            }
+            $emails[] = $user->profile->email1;
+            if($user->profile->email2){
+                $emails[] = $user->profile->email2;
+            }
+            if($user->profile->email3){
+                $emails[] = $user->profile->email3;
+            }
+        }
+        $emails = array_unique(array_filter($emails));
+        foreach($emails as $email){
+            Mail::to($email)->send(new StaffMessageMail($message));
+        }
+        
         return response()->json([
             'success' => true,
             'message' => 'メッセージを送信しました。',
