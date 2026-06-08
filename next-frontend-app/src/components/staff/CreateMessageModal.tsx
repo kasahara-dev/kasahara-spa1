@@ -65,8 +65,7 @@ export default function CreateMessageModal({
     setFormErrors({});
     setSuccessMessage("");
 
-    // 1. to_type と to の判定（0: 全員/グループ宛, 1: 個人宛）
-    const toType = selectedPersonId === "0" ? "0" : "1";
+    const toType = selectedPersonId === "0" ? "1" : "0";
     const toValue =
       selectedPersonId === "0" ? selectedGroupId : selectedPersonId;
 
@@ -82,7 +81,7 @@ export default function CreateMessageModal({
     }
 
     try {
-      const response = await fetch("/api/proxy/staff/messages", {
+      const response = await fetch("/api/proxy/staff/staff_messages", {
         method: "POST",
         headers: {
           Accept: "application/json",

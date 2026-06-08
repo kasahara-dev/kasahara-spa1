@@ -5,12 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EventItem, CalendarDayData } from "@/../../types/calendar";
 import { ja } from "date-fns/locale";
+import { Loader2 } from "lucide-react";
 
 interface EventListCardProps {
   date: Date | undefined;
   selectedDayData: CalendarDayData | null;
   onSelectNewEvent: (initialData: EventItem) => void;
   onEventClick: (evt: EventItem) => void;
+  isLoading: boolean;
 }
 
 export default function EventListCard({
@@ -18,6 +20,7 @@ export default function EventListCard({
   selectedDayData,
   onSelectNewEvent,
   onEventClick,
+  isLoading,
 }: EventListCardProps) {
   return (
     <Card className="min-h-[150px]">
@@ -46,7 +49,12 @@ export default function EventListCard({
       </CardHeader>
 
       <CardContent className="space-y-2">
-        {selectedDayData?.working == 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            読み込み中...
+          </div>
+        ) : selectedDayData?.working == 0 ? (
           <p className="text-sm text-slate-400 italic py-4 text-center">
             園休日です
           </p>

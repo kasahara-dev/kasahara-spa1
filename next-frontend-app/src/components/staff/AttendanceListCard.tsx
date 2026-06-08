@@ -4,9 +4,16 @@ import * as React from "react";
 import { format } from "date-fns";
 import { AttendanceRecord } from "@/../../types/calendar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { ja } from "date-fns/locale";
 import AttendanceBadge from "../AttendanceBadge";
+import { Loader2 } from "lucide-react";
 
 interface AttendanceListCardProps {
   date: Date | undefined;
@@ -15,6 +22,7 @@ interface AttendanceListCardProps {
   onAttendanceClick: (attendance: AttendanceRecord) => void;
   onNewAttendanceClick: () => void;
   working: number;
+  isLoading: boolean;
 }
 
 export default function AttendanceListCard({
@@ -24,6 +32,7 @@ export default function AttendanceListCard({
   onAttendanceClick,
   onNewAttendanceClick,
   working,
+  isLoading,
 }: AttendanceListCardProps) {
   return (
     <Card className="min-h-[580px] flex flex-col bg-white">
@@ -34,9 +43,7 @@ export default function AttendanceListCard({
               ? `${format(date, "M月d日(E)", { locale: ja })} 欠席等連絡`
               : "欠席等連絡"}
           </CardTitle>
-          {working == 0 ? (
-            null
-          ) : (
+          {working == 0 ? null : (
             <div className="flex gap-2">
               <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-700 border border-red-100">
                 お休み: {absentStudents.length} 名
@@ -50,18 +57,25 @@ export default function AttendanceListCard({
         <Button
           className="h-8 px-3 text-xs"
           onClick={onNewAttendanceClick}
-          disabled={working == 1 ? !date : true}
+          disabled={isLoading || (working == 1 ? !date : true)}
         >
           新規登録
         </Button>
       </CardHeader>
 
       <CardContent className="flex-1 space-y-3 overflow-y-auto max-h-[440px]">
-        {absentStudents.length === 0 && lateStudents.length === 0 ? (
+        {isLoading ? (
+          <div className="h-full flex items-center justify-center text-slate-400 text-sm gap-2 border border-dashed rounded-xl p-8">
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            読み込み中...
+          </div>
+        ) : absentStudents.length === 0 && lateStudents.length === 0 ? (
           <div className="h-full flex items-center justify-center text-slate-400 text-sm italic border border-dashed rounded-xl p-8">
             {working == 1 && date
               ? `${format(date, "M月d日")} の欠席・遅刻その他は0件です`
-              : working == 0 ? "園休日です" : "日付を選択してください"}
+              : working == 0
+                ? "園休日です"
+                : "日付を選択してください"}
           </div>
         ) : (
           <div className="space-y-3">

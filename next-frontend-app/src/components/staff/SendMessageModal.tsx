@@ -31,7 +31,7 @@ export default function SendMessageModal({
     if (!fileName) return;
     try {
       const response = await fetch(
-        `/api/proxy/staff/messages/${messageId}/download`,
+        `/api/proxy/staff/staff_messages/${messageId}/download`,
         {
           method: "GET",
           headers: {

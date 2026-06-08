@@ -100,6 +100,7 @@ export default function Home() {
             selectedDayData={selectedDayData}
             onSelectNewEvent={(initialData) => setEditingEvent(initialData)}
             onEventClick={(evt) => handleEventClick(evt as EventItem)}
+            isLoading={loading}
           />
         </div>
 
@@ -111,6 +112,7 @@ export default function Home() {
           lateStudents={lateStudents}
           onAttendanceClick={(attendance) => setSelectedAttendance(attendance)}
           onNewAttendanceClick={() => setIsCreateModalOpen(true)}
+          isLoading={loading}
         />
       </div>
 

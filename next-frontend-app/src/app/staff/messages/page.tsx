@@ -38,32 +38,75 @@ export default function MessagePage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
 
-  const fetchMessages = React.useCallback(() => {
+  const fetchMessages = React.useCallback(async () => {
     if (!token) return;
 
-    // ※ 新規送信後のリロード時はローディングアニメーションを挟まないように、
-    // 最初の1回目や、必要に応じて setIsLoading をコントロールしてもOKです
-    fetch("/api/proxy/staff/messages", {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => res.json() as Promise<MessageApiResponse>)
-      .then((data) => {
-        setSendMessages(data.send_messages || []);
-        setReceivedMessages(data.received_messages || []);
-        setGroups(data.groups || []);
-      })
-      .catch((err) => console.error(err))
-      .finally(() => {
-        setIsLoading(false);
-      });
+    // 1. ローディングを開始
+    setIsLoading(true);
+
+    try {
+      // 2. 3つの新APIを並行（同時）して叩く
+      const [staffRes, parentRes, groupsRes] = await Promise.all([
+        fetch("/api/proxy/staff/staff_messages", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+        fetch("/api/proxy/staff/parent_messages", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+        fetch("/api/proxy/staff/groups", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+      ]);
+
+      // 3. それぞれレスポンスをJSONパース
+      const staffData = (await staffRes.json()) as StaffMessage[];
+      const parentData = (await parentRes.json()) as ParentMessage[];
+      const groupsData = (await groupsRes.json()) as GroupOption[];
+
+      // 4. ステートにそれぞれセット
+      setSendMessages(staffData || []);
+      setReceivedMessages(parentData || []);
+      setGroups(groupsData || []);
+    } catch (err) {
+      console.error("データ取得に失敗しました:", err);
+    } finally {
+      // 5. 最後にローディングを終了
+      setIsLoading(false);
+    }
   }, [token]);
 
+
+  const refreshSendMessages = React.useCallback(() => {
+    if (!token) return;
+
+    fetch("/api/proxy/staff/staff_messages", {
+      method: "GET",
+      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json() as Promise<StaffMessage[]>)
+      .then((data) => {
+        setSendMessages(data || []);
+      })
+      .catch((err) => console.error(err));
+  }, [token]);
+  
   useEffect(() => {
-    fetchMessages();
+    const loadData = async () => {
+      await fetchMessages();
+    };
+    loadData();
   }, [fetchMessages]);
 
   if (!session) return <div className="p-8">認証中...</div>;
@@ -151,8 +194,8 @@ export default function MessagePage() {
                     <span className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">
                       {format(msg.created_at, "yyyy/MM/dd HH:mm")}
                     </span>
-                    <span className="ml-2">
-                      {msg.to_type === 0 ? msg.receiver_name : msg.group_names}
+                    <span className="ml-2 truncate">
+                      {msg.to_type === 0 ? msg.receiver_name + "(" + msg.group_names + ")" : msg.group_names}
                     </span>
                     <span className="ml-2 truncate">{msg.title}</span>
                     {msg.file_path ? (
@@ -174,7 +217,7 @@ export default function MessagePage() {
                 groups={groups}
                 onClose={() => setIsCreateOpen(false)}
                 token={token}
-                onSuccess={fetchMessages}
+                onSuccess={refreshSendMessages}
               />
             )}
           </CardContent>

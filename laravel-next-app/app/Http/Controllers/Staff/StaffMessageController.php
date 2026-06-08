@@ -16,7 +16,7 @@ use PhpParser\NodeVisitor\ParentConnectingVisitor;
 use App\Mail\StaffMessageMail;
 use Illuminate\Support\Facades\Mail;
 
-class MessageController extends Controller
+class StaffMessageController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -24,13 +24,7 @@ class MessageController extends Controller
     public function index()
     {
         $sendMessages = StaffMessage::getFormattedMessages();
-        $receivedMessages = ParentMessage::getFormattedMessages();
-        $groups = Group::with(['users'])->get();
-        return response()->json([
-            "send_messages"     => $sendMessages,
-            "received_messages" => $receivedMessages,
-            "groups" => $groups,
-        ]);
+        return response()->json($sendMessages);
     }
     public function download(Request $request, $id)
     {
