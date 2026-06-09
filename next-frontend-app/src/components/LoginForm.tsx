@@ -50,7 +50,7 @@ export default function LoginForm({ role }: LoginFormProps) {
 
   return (
     <div className="bg-white p-8 rounded-2xl shadow-sm w-full max-w-md border border-gray-100">
-      <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">
+      <h1 className="text-2xl font-bold text-center mb-6 text-primary">
         {title}
       </h1>
 

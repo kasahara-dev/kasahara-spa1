@@ -5,6 +5,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { ja } from "date-fns/locale";
 import { parseISO, isWithinInterval, format } from "date-fns";
 import { useSession } from "next-auth/react";
+import { Loader2 } from "lucide-react";
 import { AttendanceModal } from "./AttendanceModal";
 
 interface CalendarEvent {
@@ -193,7 +194,10 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
 
   if (!data)
     return (
-      <div className="text-chic-gray-sub p-4 text-center">読み込み中...</div>
+      <div className="flex text-muted-foreground p-4 text-center justify-center">
+        <Loader2 className="w-4 h-4 animate-spin text-primary" />
+        読み込み中...
+      </div>
     );
 
   const closedDays = data.calendar_data
