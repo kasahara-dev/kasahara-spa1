@@ -97,14 +97,10 @@ export default function CreateMessageModal({
         setTitle("");
         setDetail("");
         setFile(null);
-        setTimeout(() => {
-          // 💡 親から onSuccess が渡されていたら、画面データを最新に更新する
-          if (typeof onSuccess === "function") {
-            onSuccess();
-          }
-          onClose(); // モーダルを閉じる
-        }, 1500);
-
+        if (typeof onSuccess === "function") {
+          onSuccess();
+        }
+        onClose();
         return;
       }
 
