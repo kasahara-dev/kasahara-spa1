@@ -5,27 +5,37 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+interface HeaderProps {
+  onLogoClick?: () => void;
+}
 
-export default function Header() {
+export default function Header({ onLogoClick }: HeaderProps) {
   const { data: session, status } = useSession();
   const appName = process.env.NEXT_PUBLIC_APP_NAME || "幼稚園連絡アプリ";
   const handleSignOut = () => {
     const redirectUrl = session?.role === "staff" ? "/staff/login" : "/login";
     signOut({ callbackUrl: redirectUrl });
   };
-  const userNameWithTitle = session?.user?.name + 'さん';
+  const userNameWithTitle = session?.user?.name + "さん";
   const staffNavItems = [
     { label: "Top", href: "/staff" },
-    { label: "メッセージ", href: "/staff/messages" },
+    { label: "メッセージ", href: "/staff/messages", dataNav: "messages" },
     { label: "連絡先一覧", href: "/staff/groups" },
   ];
   const pathname = usePathname();
+  const handleLogoClick = (e: React.MouseEvent) => {
+    if (status === "authenticated" && onLogoClick) {
+      e.preventDefault();
+      onLogoClick();
+    }
+  };
 
   return (
     <header className="bg-header w-[100vw]">
       <div className="max-w-7xl mx-auto px-4 py-2 flex justify-between items-center">
         <Link
           href={session?.role === "staff" ? "/staff" : "/"}
+          onClick={handleLogoClick}
           className="text-xl font-bold text-primary"
         >
           {status === "authenticated" &&
@@ -42,6 +52,7 @@ export default function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
+                  data-nav={item.dataNav}
                   className={cn(
                     "px-4 py-2 font-medium rounded-md transition-colors",
                     pathname === item.href

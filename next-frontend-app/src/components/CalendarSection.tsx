@@ -1,11 +1,12 @@
 "use client";
 
-import {useState,useCallback,useEffect} from "react";
+import { useState, useCallback, useEffect } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Calendar } from "@/components/ui/calendar";
 import { ja } from "date-fns/locale";
 import { parseISO, isWithinInterval, format } from "date-fns";
 import { useSession } from "next-auth/react";
-import Loading from "@/components/Loading"
+import Loading from "@/components/Loading";
 import { AttendanceModal } from "./AttendanceModal";
 
 interface CalendarEvent {
@@ -39,6 +40,8 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [month, setMonth] = useState<Date>(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const [isSaving, setIsSaving] = useState(false);
   const [submitMessage, setSubmitMessage] = useState<string>("");
@@ -69,6 +72,22 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
       })
       .catch((err) => console.error("データ取得に失敗:", err));
   }, [apiUrl, token]);
+
+  useEffect(() => {
+    const handleLogoClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('a[href="/"]') || target.closest('a[href="/staff"]')) {
+        // 💡 ブラウザのクリックイベント発信なので、Reactに絶対に怒られません
+        setIsModalOpen(false);
+        setDate(undefined);
+        setSubmitMessage("");
+        setSubmitMessageType("");
+      }
+    };
+
+    window.addEventListener("click", handleLogoClick);
+    return () => window.removeEventListener("click", handleLogoClick);
+  }, []);
 
   useEffect(() => {
     fetchCalendarData();
@@ -112,14 +131,14 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
     } | null = null;
 
     if (formStatus === 0) {
-      if (!attendanceId){
+      if (!attendanceId) {
         setFormError("カレンダーIDが特定できないため、削除できません");
         return;
       }
       requestUrl = `${baseUrl}/${attendanceId}`;
       requestMethod = "DELETE";
     } else {
-      if (hasExistingAttendance && !calendarId){
+      if (hasExistingAttendance && !calendarId) {
         setFormError("カレンダーIDが特定できないため、更新できません");
         return;
       }
@@ -166,6 +185,8 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
     }
   };
 
+
+
   const setFormError = (msg: string) => {
     setSubmitMessage(msg);
     setSubmitMessageType("error");
@@ -192,10 +213,7 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
     setIsModalOpen(true);
   };
 
-  if (!data)
-    return (
-      <Loading />
-    );
+  if (!data) return <Loading />;
 
   const closedDays = data.calendar_data
     .filter((item) => item.working === 0)
@@ -256,8 +274,8 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
           submitMessage={submitMessage}
           submitMessageType={submitMessageType}
           onClose={() => {
-            setIsModalOpen(false);
             setDate(undefined);
+            setIsModalOpen(false);
             setSubmitMessage("");
             setSubmitMessageType("");
           }}

@@ -107,6 +107,20 @@ export default function MessagePage() {
     };
     loadData();
   }, [fetchMessages]);
+  
+  useEffect(() => {
+    const handleNavClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-nav="messages"]')) {
+        setSelectedSendMessage(null);
+        setSelectedReceivedMessage(null);
+        setIsCreateOpen(false);
+      }
+    };
+
+    window.addEventListener("click", handleNavClick);
+    return () => window.removeEventListener("click", handleNavClick);
+  }, []);
 
   if (!session) return <div className="p-8">認証中...</div>;
 
