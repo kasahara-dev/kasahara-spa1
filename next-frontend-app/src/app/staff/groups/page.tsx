@@ -10,7 +10,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import CopyButton from "@/components/CopyButton";
-import { Profile, User, Group } from "@/../types/staff/groups";
+import { Group } from "@/../types/staff/groups";
 import Loading from "@/components/Loading"
 
 export default function Home() {
@@ -33,10 +33,7 @@ export default function Home() {
       if (!res.ok) {
         throw new Error(`APIエラー: ${res.status}`);
       }
-
       const data = (await res.json()) as Group[];
-      console.log("🔥 Laravelから届いたグループ・連絡先データ:", data);
-
       setGroups(data || []);
     } catch (err) {
       console.error("連絡先の取得に失敗しました:", err);

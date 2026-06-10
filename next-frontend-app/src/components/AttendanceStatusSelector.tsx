@@ -60,7 +60,6 @@ export default function AttendanceStatusSelector({
     memoizedDetail.current = text;
   }
 
-  // ステータス変更時に理由をクリアする共通ルール
   const handleStatusChange = (val: string) => {
     const nextStatus = Number(val);
     onChange(nextStatus);
@@ -73,7 +72,6 @@ export default function AttendanceStatusSelector({
 
   return (
     <div className="space-y-4">
-      {/* 1. ステータス選択 */}
       <RadioGroup
         value={String(value)}
         onValueChange={handleStatusChange}
@@ -98,7 +96,6 @@ export default function AttendanceStatusSelector({
         })}
       </RadioGroup>
 
-      {/* 2. 理由入力（遅刻その他の時だけ表示。スタッフ・保護者共通！） */}
       {value === ATTENDANCE_STATUS.LATE && (
         <div className="space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
           <label className="text-xs font-bold text-slate-600">

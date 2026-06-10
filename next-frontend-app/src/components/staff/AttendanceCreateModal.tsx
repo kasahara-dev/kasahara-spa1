@@ -191,23 +191,17 @@ export default function AttendanceCreateModal({
             </div>
           )}
 
-          {/* ------------------------------------------------------------- */}
-          {/* 🔴 【修正】バリデーションエラー表示エリア（更新側と統一） */}
-          {/* ------------------------------------------------------------- */}
-          {/* ① detail（遅刻の理由未入力など）のエラー */}
           {currentErrors.detail && currentErrors.detail.length > 0 && (
             <div className="p-3 rounded-lg text-sm font-medium border bg-red-50 border-red-200 text-red-800 animate-in fade-in duration-200">
               {currentErrors.detail[0]}
             </div>
           )}
 
-          {/* ② 汎用エラー（global） */}
           {currentErrors.global && currentErrors.global.length > 0 && (
             <div className="p-3 rounded-lg text-sm font-medium border bg-red-50 border-red-200 text-red-800 animate-in fade-in duration-200">
               {currentErrors.global[0]}
             </div>
           )}
-          {/* ------------------------------------------------------------- */}
         </div>
 
         {/* フッター */}
@@ -224,7 +218,6 @@ export default function AttendanceCreateModal({
               if (!selectedUserId) return;
 
               try {
-                // 💡 await でレスポンスをしっかり受け取る
                 const response = await onSave({
                   user_id: selectedUserId,
                   status: status,
@@ -232,8 +225,6 @@ export default function AttendanceCreateModal({
                   calendar_id: calendarId,
                   working: working,
                 });
-
-                // 🔴 【修正】通信が成功(200番台)したときだけモーダルを閉じる！
                 if (response && response.ok) {
                   onClose();
                 }

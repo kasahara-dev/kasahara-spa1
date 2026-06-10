@@ -17,8 +17,6 @@ class CalendarController extends Controller
             'end_date'   => config('app_settings.end_date'),
         ];
         $userId = auth()->id();
-        // 下の行は開発用
-        // $userId = 2;
 
         $calendarData = Calendar::with([
             'events',

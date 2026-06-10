@@ -10,8 +10,6 @@ import {
 export function useCalendarData(token: string | undefined) {
   const [staffData, setStaffData] =
     React.useState<StaffCalendarResponse | null>(null);
-
-  // 💡 【追加】バリデーションエラーを管理するState
   const [formErrors, setFormErrors] = React.useState<Record<string, string[]>>(
     {},
   );
@@ -86,7 +84,7 @@ export function useCalendarData(token: string | undefined) {
     title: string;
     detail: string;
   }) => {
-    setFormErrors({}); // 保存開始時に前のお掃除
+    setFormErrors({});
     const isNew = editingEvent.id === 0;
     const url = isNew
       ? "/api/proxy/staff/event"
@@ -113,19 +111,14 @@ export function useCalendarData(token: string | undefined) {
       },
       body: JSON.stringify(bodyData),
     });
-
-    // 💡 エラーハンドリング
     if (!res.ok) {
       const errorData = await res.json();
       setFormErrors(
         errorData.errors || { global: ["イベントの保存に失敗しました"] },
       );
     }
-
     return res;
   };
-
-  // 💡 出欠の「更新（保存）」処理
   const handleSaveAttendance = async (
     updatedData: AttendanceRecord & {
       status: number;
@@ -135,9 +128,7 @@ export function useCalendarData(token: string | undefined) {
     },
   ) => {
     if (!token) return;
-
-    setFormErrors({}); // 🔴 保存を叩く瞬間に、古いエラーをお掃除
-
+    setFormErrors({});
     const isDelete = updatedData.status === 0;
     const url = `/api/proxy/staff/attendance/${updatedData.id}`;
     const method = isDelete ? "DELETE" : "PATCH";
@@ -162,7 +153,6 @@ export function useCalendarData(token: string | undefined) {
     if (res.ok) {
       void fetchAllData();
     } else {
-      // 🔴 【ここが核心！】Laravelのバリデーションエラー（422など）をキャッチしてStateに入れる
       const errorData = await res.json();
       setFormErrors(
         errorData.errors || { global: ["変更の保存に失敗しました。"] },
@@ -170,8 +160,6 @@ export function useCalendarData(token: string | undefined) {
     }
     return res;
   };
-
-  // 💡 出欠の「新規登録」処理
   const handleCreateAttendance = async (bodyData: {
     status: number;
     detail: string | null;
@@ -180,9 +168,7 @@ export function useCalendarData(token: string | undefined) {
     working: number;
   }) => {
     if (!token) return;
-
     setFormErrors({});
-
     const res = await fetch("/api/proxy/staff/attendance", {
       method: "POST",
       headers: {

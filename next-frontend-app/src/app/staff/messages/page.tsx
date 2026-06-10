@@ -9,11 +9,9 @@ import ReceivedMessageModal from "@/components/staff/ReceivedMessageModal";
 import SendMessageModal from "@/components/staff/SendMessageModal";
 import CreateMessageModal from "@/components/staff/CreateMessageModal";
 import {
-  MessageApiResponse,
   StaffMessage,
   ParentMessage,
   GroupOption,
-  UserOption,
 } from "@/../types/staff/message";
 import {
   Card,

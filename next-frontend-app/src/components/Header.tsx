@@ -37,7 +37,7 @@ export default function Header() {
         {status === "authenticated" &&
           session?.role === "staff" &&
           pathname.startsWith("/staff") && (
-            <nav className="md:flex items-center gap-1">
+            <nav className="flex items-center gap-1">
               {staffNavItems.map((item) => (
                 <Link
                   key={item.href}

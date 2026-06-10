@@ -8,7 +8,7 @@ const handler = NextAuth({
       credentials: {
         loginId: { label: "ログインID", type: "text" },
         password: { label: "Password", type: "password" },
-        role:{label:"Role",type:"text"},
+        role: { label: "Role", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.loginId || !credentials?.password) {
@@ -27,7 +27,7 @@ const handler = NextAuth({
               body: JSON.stringify({
                 login_id: credentials.loginId,
                 password: credentials.password,
-                role:credentials.role,
+                role: credentials.role,
               }),
             },
           );
@@ -42,7 +42,7 @@ const handler = NextAuth({
             id: data.user.id,
             name: data.user.name,
             loginId: data.user.login_id,
-            role:data.user.role,
+            role: data.user.role,
             accessToken: data.token,
           };
         } catch (error) {
@@ -54,7 +54,7 @@ const handler = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user }) {
-      if (user) {
+      if (user && user.accessToken && user.id) {
         token.accessToken = user.accessToken;
         token.id = user.id;
         token.role = user.role;

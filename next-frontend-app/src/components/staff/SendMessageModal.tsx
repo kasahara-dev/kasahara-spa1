@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, User, FileText } from "lucide-react";
+import { Calendar, User } from "lucide-react";
 import { StaffMessage } from "@/../types/staff/message";
 import { Paperclip } from "lucide-react";
 

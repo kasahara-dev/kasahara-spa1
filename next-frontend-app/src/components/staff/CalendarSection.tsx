@@ -44,8 +44,6 @@ export default function CalendarSection({
   const [month, setMonth] = React.useState<Date>(new Date());
   const data = staffData || internalData;
   const date = selectedDate !== undefined ? selectedDate : internalDate;
-  const setDate = onDateSelect || setInternalDate;
-
   const fetchCalendarData = React.useCallback(() => {
     if (staffData || !token) return;
 

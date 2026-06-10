@@ -21,7 +21,6 @@ interface EventEditModalProps {
 
 export default function EventEditModal({
   editingEvent,
-  date,
   onClose,
   onSave,
   onSuccess,
@@ -34,7 +33,6 @@ export default function EventEditModal({
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const handleSave = async () => {
-    // 💡 1. 送信前にフロント側でトリム（空白除去）してチェック！
     const trimmedTitle = title.trim();
     const trimmedDetail = detail.trim();
     const localErrors: Record<string, string[]> = {};
@@ -46,7 +44,6 @@ export default function EventEditModal({
       localErrors.detail = ["詳細は必須入力です。"];
     }
 
-    // 💡 2. エラーが1つでもあれば、通信せずにその場で赤い文字を表示して終了！
     if (Object.keys(localErrors).length > 0) {
       setFormErrors(localErrors);
       return;
@@ -56,7 +53,6 @@ export default function EventEditModal({
       setIsSubmitting(true);
       setFormErrors({});
 
-      // 💡 3. トリム済みの綺麗なデータを親の関数に渡す
       const response = await onSave({
         editingEvent,
         title: trimmedTitle,

@@ -26,7 +26,6 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            // 'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -43,7 +42,6 @@ class User extends Authenticatable
     }
     public function getMessages(){
         $messages = [];
-        // 送受信区分:sent '0':受信、'1':送信
         if($this->role == 'parent'){
             // 受信メッセージ
             // 送受信区分、宛先区分、宛先、タイトル、本文、添付ファイルパス、日時

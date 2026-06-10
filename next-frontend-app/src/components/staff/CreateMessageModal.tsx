@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -48,7 +48,6 @@ export default function CreateMessageModal({
   });
   const [selectedPersonId, setSelectedPersonId] = useState<string>("0");
 
-  // 💡 追加：入力値と通信状態のState
   const [title, setTitle] = useState("");
   const [detail, setDetail] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -58,18 +57,14 @@ export default function CreateMessageModal({
 
   const currentGroup = groups.find((g) => String(g.id) === selectedGroupId);
   const displayUsers = currentGroup ? currentGroup.users : [];
-
-  // 🚀 💡 追加：送信処理
   const handleSend = async () => {
     setIsSubmitting(true);
     setFormErrors({});
     setSuccessMessage("");
-
     const toType = selectedPersonId === "0" ? "1" : "0";
     const toValue =
       selectedPersonId === "0" ? selectedGroupId : selectedPersonId;
 
-    // 2. FormDataの組み立て
     const formData = new FormData();
     formData.append("to_type", toType);
     formData.append("to", toValue);

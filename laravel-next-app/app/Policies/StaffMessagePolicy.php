@@ -4,8 +4,6 @@ namespace App\Policies;
 
 use App\Models\StaffMessage;
 use App\Models\User;
-use App\Models\Group;
-use Illuminate\Auth\Access\Response;
 
 class StaffMessagePolicy
 {

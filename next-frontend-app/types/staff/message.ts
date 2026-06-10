@@ -34,9 +34,3 @@ export interface ParentMessage {
   sender_name: string;
   group_names: string;
 }
-
-export interface MessageApiResponse {
-  send_messages: StaffMessage[];
-  received_messages: ParentMessage[];
-  groups: GroupOption[];
-}
