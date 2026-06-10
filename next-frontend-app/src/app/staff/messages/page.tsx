@@ -22,7 +22,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Paperclip, Loader2 } from "lucide-react";
+import { Paperclip } from "lucide-react";
+import Loading from "@/components/Loading";
 
 export default function MessagePage() {
   const { data: session } = useSession();
@@ -125,10 +126,7 @@ export default function MessagePage() {
           </CardHeader>
           <CardContent className="max-h-[350px] overflow-y-auto space-y-2 pr-4 pt-2 pb-6 px-6">
             {isLoading ? (
-              <div className="flex items-center justify-center py-8 text-muted-foreground gap-2 text-sm">
-                <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                読み込み中...
-              </div>
+              <Loading />
             ) : receivedMessages.length === 0 ? (
               <div className="text-center py-8 text-sm text-muted-foreground">
                 受信履歴はありません
@@ -175,10 +173,7 @@ export default function MessagePage() {
           </CardHeader>
           <CardContent className="max-h-[350px] overflow-y-auto space-y-2 pr-4 pt-2 pb-6 px-6">
             {isLoading ? (
-              <div className="flex items-center justify-center py-8 text-muted-foreground gap-2 text-sm">
-                <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                読み込み中...
-              </div>
+              <Loading />
             ) : sendMessages.length === 0 ? (
               <div className="text-center py-8 text-sm text-muted-foreground">
                 送信履歴はありません

@@ -11,8 +11,7 @@ import {
 } from "@/components/ui/accordion";
 import CopyButton from "@/components/CopyButton";
 import { Profile, User, Group } from "@/../types/staff/groups";
-import { Loader2 } from "lucide-react";
-import { group } from "console";
+import Loading from "@/components/Loading"
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
@@ -56,12 +55,7 @@ export default function Home() {
   }, [token, fetchGroups]);
   if (status === "loading" || isLoading) {
     return (
-      <div className="flex h-screen w-full justify-center items-center gap-2">
-        <Loader2 className="w-5 h-5 animate-spin text-primary" />
-        <div className="text-muted-foreground text-sm font-medium">
-          読み込み中...
-        </div>
-      </div>
+      <Loading />
     );
   }
   return (

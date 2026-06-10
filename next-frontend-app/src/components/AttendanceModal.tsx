@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useState } from "react";
 import { X } from "lucide-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -67,10 +67,8 @@ export function AttendanceModal({
   const targetDateStr = format(date, "yyyy-MM-dd");
   const formattedDate = format(date, "M月d日(E)", { locale: ja });
   const isExpired = isPastDeadline(targetDateStr, deadlineTime);
-  const [formStatus, setFormStatus] = React.useState<number>(
-    attendance?.status ?? 0,
-  );
-  const [formDetail, setFormDetail] = React.useState<string>(
+  const [formStatus, setFormStatus] = useState<number>(attendance?.status ?? 0);
+  const [formDetail, setFormDetail] = useState<string>(
     attendance?.detail ?? "",
   );
 
@@ -90,7 +88,7 @@ export function AttendanceModal({
             {formattedDate}の出欠予定
           </h3>
           <div>
-            <AttendanceBadge type={attendance?.status || 0} />
+            <AttendanceBadge type={attendance?.status || 0}/>
             <p className="mt-2 text-sm text-muted-foreground">
               {attendance?.detail}
             </p>

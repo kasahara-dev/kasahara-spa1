@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EventItem, CalendarDayData } from "@/../../types/calendar";
 import { ja } from "date-fns/locale";
-import { Loader2 } from "lucide-react";
+import Loading from "@/components/Loading"
 
 interface EventListCardProps {
   date: Date | undefined;
@@ -50,10 +50,7 @@ export default function EventListCard({
 
       <CardContent className="space-y-2">
         {isLoading ? (
-          <div className="flex justify-center text-muted-foreground">
-            <Loader2 className="w-4 h-4 animate-spin text-primary" />
-            読み込み中...
-          </div>
+          <Loading />
         ) : selectedDayData?.working == 0 ? (
           <p className="text-sm text-slate-400 italic py-4 text-center">
             園休日です

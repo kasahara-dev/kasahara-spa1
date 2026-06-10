@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { ja } from "date-fns/locale";
 import AttendanceBadge from "../AttendanceBadge";
-import { Loader2 } from "lucide-react";
+import Loading from "@/components/Loading"
 
 interface AttendanceListCardProps {
   date: Date | undefined;
@@ -65,10 +65,7 @@ export default function AttendanceListCard({
 
       <CardContent className="flex-1 space-y-3 overflow-y-auto max-h-[440px]">
         {isLoading ? (
-          <div className="h-full flex items-center justify-center text-slate-400 text-sm gap-2 border border-dashed rounded-xl p-8">
-            <Loader2 className="w-4 h-4 animate-spin text-primary" />
-            読み込み中...
-          </div>
+          <Loading />
         ) : absentStudents.length === 0 && lateStudents.length === 0 ? (
           <div className="h-full flex items-center justify-center text-slate-400 text-sm italic border border-dashed rounded-xl p-8">
             {working == 1 && date

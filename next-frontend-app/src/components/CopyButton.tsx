@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Copy, Check } from "lucide-react"; // アイコンをインポート
+import { Copy, Check } from "lucide-react";
 
 interface CopyButtonProps {
   text: string;
@@ -10,14 +10,9 @@ export default function CopyButton({ text }: CopyButtonProps) {
 
   const handleCopy = async () => {
     try {
-      // 💡 クリップボードにコピーする魔法の1行！
       await navigator.clipboard.writeText(text);
-
-      // コピー成功したらチェックマークにする
       setCopied(true);
-
-      // 1.5秒後に元のアイコンに戻す
-      setTimeout(() => setCopied(false), 1500);
+      setTimeout(() => setCopied(false), 1000);
     } catch (err) {
       console.error("コピーに失敗しました", err);
     }
@@ -30,9 +25,9 @@ export default function CopyButton({ text }: CopyButtonProps) {
       title="コピー"
     >
       {copied ? (
-        <Check className="w-3.5 h-3.5 text-green-600" /> // コピー成功時
+        <Check className="w-3.5 h-3.5 text-green-600" />
       ) : (
-        <Copy className="w-3.5 h-3.5" /> // 通常時
+        <Copy className="w-3.5 h-3.5" />
       )}
     </button>
   );

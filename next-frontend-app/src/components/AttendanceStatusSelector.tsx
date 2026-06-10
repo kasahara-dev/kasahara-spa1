@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useEffect,useRef } from "react";
 
 export const ATTENDANCE_STATUS = {
   PRESENT: 0,
@@ -49,8 +49,8 @@ export default function AttendanceStatusSelector({
   disabled = false,
   name = "default",
 }: AttendanceStatusSelectorProps) {
-  const memoizedDetail = React.useRef<string>(detail);
-  React.useEffect(() => {
+  const memoizedDetail = useRef<string>(detail);
+  useEffect(() => {
     if (detail && value === ATTENDANCE_STATUS.LATE) {
       memoizedDetail.current = detail;
     }

@@ -4,13 +4,15 @@ import { useState, useEffect } from "react";
 import { Message } from "@/../types/message";
 import { useSession } from "next-auth/react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Paperclip, Calendar, User, Mail, Send} from "lucide-react";
+import { Paperclip, Calendar, User, Mail, Send } from "lucide-react";
+import Loading from "@/components/Loading";
 import MessageDetailModal from "@/components/MessageDetailModal";
 
 export default function MessagesPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const token = session?.accessToken;
 
   useEffect(() => {
@@ -24,8 +26,14 @@ export default function MessagesPage() {
     })
       .then((res) => res.json())
       .then((data) => setMessages(data))
-      .catch((err) => console.error(err));
+      .catch((err) => console.error(err))
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, [token]);
+  if (status == "loading" || isLoading) {
+    <Loading />;
+  }
 
   if (!session) return <div className="p-8">認証中...</div>;
 

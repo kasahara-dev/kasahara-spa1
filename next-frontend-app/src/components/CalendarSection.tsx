@@ -1,11 +1,11 @@
 "use client";
 
-import * as React from "react";
+import {useState,useCallback,useEffect} from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { ja } from "date-fns/locale";
 import { parseISO, isWithinInterval, format } from "date-fns";
 import { useSession } from "next-auth/react";
-import { Loader2 } from "lucide-react";
+import Loading from "@/components/Loading"
 import { AttendanceModal } from "./AttendanceModal";
 
 interface CalendarEvent {
@@ -32,21 +32,21 @@ interface CalendarApiResponse {
 }
 
 export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
-  const [data, setData] = React.useState<CalendarApiResponse | null>(null);
+  const [data, setData] = useState<CalendarApiResponse | null>(null);
   const { data: session } = useSession();
   const token = session?.accessToken;
 
-  const [date, setDate] = React.useState<Date | undefined>(undefined);
-  const [month, setMonth] = React.useState<Date>(new Date());
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [month, setMonth] = useState<Date>(new Date());
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [isSaving, setIsSaving] = React.useState(false);
-  const [submitMessage, setSubmitMessage] = React.useState<string>("");
-  const [submitMessageType, setSubmitMessageType] = React.useState<
+  const [isSaving, setIsSaving] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState<string>("");
+  const [submitMessageType, setSubmitMessageType] = useState<
     "success" | "error" | ""
   >("");
 
-  const fetchCalendarData = React.useCallback(() => {
+  const fetchCalendarData = useCallback(() => {
     if (!token) return;
     fetch(apiUrl, {
       method: "GET",
@@ -70,7 +70,7 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
       .catch((err) => console.error("データ取得に失敗:", err));
   }, [apiUrl, token]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchCalendarData();
   }, [fetchCalendarData]);
 
@@ -194,10 +194,7 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
 
   if (!data)
     return (
-      <div className="flex text-muted-foreground p-4 text-center justify-center">
-        <Loader2 className="w-4 h-4 animate-spin text-primary" />
-        読み込み中...
-      </div>
+      <Loading />
     );
 
   const closedDays = data.calendar_data

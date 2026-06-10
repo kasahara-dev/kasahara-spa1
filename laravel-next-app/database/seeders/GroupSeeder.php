@@ -26,7 +26,7 @@ class GroupSeeder extends Seeder
             'category' => '1',
         ]);
         Group::create([
-            'name' => '年中',
+            'name' => '年長',
             'category' => '1',
         ]);
         Group::create([

@@ -13,7 +13,7 @@
 3.  `make init`
 
 > [!IMPORTANT]
-> MySQL は、OS によって起動しない場合があるのでそれぞれの PC に合わせて docker-compose.yml ファイルを編集してください
+> MySQL は、OS によって起動しない場合があるのでそれぞれの PC に合わせて compose.yaml ファイルを編集してください
 
 > [!IMPORTANT]
 > "The stream or file could not be opened"エラーが発生した場合
