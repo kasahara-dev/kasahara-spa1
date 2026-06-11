@@ -72,9 +72,18 @@ export default function Home() {
     setEditingEvent(evt);
   };
 
+  const isAnyModalOpen = !!(
+    editingEvent ||
+    selectedAttendance ||
+    isCreateModalOpen
+  );
+
   return (
     <main className="w-full p-6 pb-20 space-y-6 relative">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+      <div
+        inert={isAnyModalOpen ? true : undefined}
+        className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start"
+      >
         <div className="flex flex-col space-y-6">
           {/* 日付選択セクション */}
           <div className="bg-white p-5 rounded-xl shadow-sm border">

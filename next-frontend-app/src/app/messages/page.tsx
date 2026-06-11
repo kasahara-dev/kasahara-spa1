@@ -39,7 +39,9 @@ export default function MessagesPage() {
 
   return (
     <div className="px-4 pb-20 flex flex-col items-center">
-      <div className="w-full md:w-1/2 mt-2">
+      <div
+        className="w-full md:w-1/2 mt-2"
+      >
         <h1 className="underline text-primary font-bold">メッセージ履歴</h1>
 
         {messages.length === 0 ? (
