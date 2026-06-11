@@ -22,50 +22,46 @@ export default function ReceivedMessageModal({
   onClose,
 }: ReceivedMessageModalProps) {
   return (
-    <div className="fixed inset-0 top-[64px] z-40 bg-staff-soft overflow-y-auto">
-      <div className="sticky top-0 z-10 bg-staff-soft">
-        <div className="max-w-2xl mx-auto relative px-6 py-4 flex justify-center bg-staff-soft">
-          <h1 className="text-2xl font-bold text-primary">
-            受信メッセージ詳細
-          </h1>
-        </div>
-      </div>
+    <div
+      className="fixed top-[64px] inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in"
+      onClick={onClose}
+    >
+      <Card
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border flex flex-col max-h-[85vh] animate-scale-up overflow-hidden"
+      >
+        {/* ヘッダー */}
+        <CardHeader className="border-b text-primary flex justify-center text-base font-bold">
+          <CardTitle>受信メッセージ詳細</CardTitle>
+        </CardHeader>
 
-      <div className="px-6 max-w-2xl mx-auto pb-20">
-        <Card className="shadow-sm border-muted">
-          <CardHeader className="bg-muted/30 pb-2">
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2">
-              <span className="flex items-start gap-1">
-                <Calendar className="w-3.5 h-3.5" />
-                {format(message.created_at, "yyyy/MM/dd HH:mm")}
-              </span>
-              <div className="flex">
-                <User className="w-3.5 h-3.5 mr-1" />
-                <div>
-                  <div className="text-foreground">{message.sender_name}</div>
-                  <div>({message.group_names})</div>
-                </div>
-              </div>
+        <CardContent className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2">
+          <span className="flex items-start gap-1">
+            <Calendar className="w-3.5 h-3.5" />
+            {format(message.created_at, "yyyy/MM/dd HH:mm")}
+          </span>
+          <div className="flex">
+            <User className="w-3.5 h-3.5 mr-1" />
+            <div>
+              <div className="text-foreground">{message.sender_name}</div>
+              <div>({message.group_names})</div>
             </div>
-          </CardHeader>
-
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-                本文
-              </h4>
-              <p className="text-sm leading-relaxed text-foreground bg-muted/20 p-3.5 rounded-md whitespace-pre-wrap">
-                {message.detail}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+        <CardContent className="space-y-2">
+          <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+            本文
+          </h4>
+          <p className="text-sm leading-relaxed text-foreground bg-muted/20 p-3.5 rounded-md whitespace-pre-wrap">
+            {message.detail}
+          </p>
+        </CardContent>
         <div className="flex justify-center pt-3">
           <Button className="px-4 py-2" onClick={onClose}>
             戻る
           </Button>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

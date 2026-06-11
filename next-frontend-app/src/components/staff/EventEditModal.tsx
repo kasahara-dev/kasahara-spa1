@@ -85,7 +85,7 @@ export default function EventEditModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed top-[64px] inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 space-y-4 border">
         <h2 className="text-lg font-bold text-primary">
           {editingEvent.id === 0 ? "予定の新規登録" : "予定の編集"}
@@ -152,7 +152,11 @@ export default function EventEditModal({
             キャンセル
           </Button>
           <Button onClick={handleSave} disabled={isSubmitting}>
-            {isSubmitting ? "保存中..." : (editingEvent.id === 0 ? "予定を登録する" : "変更を保存する")}
+            {isSubmitting
+              ? "保存中..."
+              : editingEvent.id === 0
+                ? "予定を登録する"
+                : "変更を保存する"}
           </Button>
         </div>
       </div>
