@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { createPortal } from "react-dom";
 import { Calendar } from "@/components/ui/calendar";
 import { ja } from "date-fns/locale";
 import { parseISO, isWithinInterval, format } from "date-fns";
@@ -32,7 +32,13 @@ interface CalendarApiResponse {
   }>;
 }
 
-export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
+export default function CalendarSection({
+  apiUrl,
+  onModalStateChange,
+}: {
+  apiUrl: string;
+  onModalStateChange?: (isOpen: boolean) => void;
+}) {
   const [data, setData] = useState<CalendarApiResponse | null>(null);
   const { data: session } = useSession();
   const token = session?.accessToken;
@@ -40,8 +46,11 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [month, setMonth] = useState<Date>(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (onModalStateChange) {
+      onModalStateChange(isModalOpen);
+    }
+  }, [isModalOpen, onModalStateChange]);
 
   const [isSaving, setIsSaving] = useState(false);
   const [submitMessage, setSubmitMessage] = useState<string>("");
@@ -77,7 +86,6 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
     const handleLogoClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (target.closest('a[href="/"]') || target.closest('a[href="/staff"]')) {
-        // 💡 ブラウザのクリックイベント発信なので、Reactに絶対に怒られません
         setIsModalOpen(false);
         setDate(undefined);
         setSubmitMessage("");
@@ -185,8 +193,6 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
     }
   };
 
-
-
   const setFormError = (msg: string) => {
     setSubmitMessage(msg);
     setSubmitMessageType("error");
@@ -265,27 +271,30 @@ export default function CalendarSection({ apiUrl }: { apiUrl: string }) {
         }}
       />
 
-      {isModalOpen && date && (
-        <AttendanceModal
-          date={date}
-          dayData={selectedDayData}
-          deadlineTime={data.config.deadline_time ?? "08:00"}
-          isSaving={isSaving}
-          submitMessage={submitMessage}
-          submitMessageType={submitMessageType}
-          onClose={() => {
-            setDate(undefined);
-            setIsModalOpen(false);
-            setSubmitMessage("");
-            setSubmitMessageType("");
-          }}
-          onSave={handleSaveAttendance}
-          onStatusChange={() => {
-            setSubmitMessage("");
-            setSubmitMessageType("");
-          }}
-        />
-      )}
+      {isModalOpen && date && typeof window !== "undefined"
+        ? createPortal(
+            <AttendanceModal
+              date={date}
+              dayData={selectedDayData}
+              deadlineTime={data.config.deadline_time ?? "08:00"}
+              isSaving={isSaving}
+              submitMessage={submitMessage}
+              submitMessageType={submitMessageType}
+              onClose={() => {
+                setDate(undefined);
+                setIsModalOpen(false);
+                setSubmitMessage("");
+                setSubmitMessageType("");
+              }}
+              onSave={handleSaveAttendance}
+              onStatusChange={() => {
+                setSubmitMessage("");
+                setSubmitMessageType("");
+              }}
+            />,
+            document.body,
+          )
+        : null}
     </>
   );
 }
