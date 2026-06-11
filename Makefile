@@ -1,26 +1,20 @@
 data:
-	docker compose exec php php artisan migrate:fresh
-	docker compose exec php php artisan db:seed
+	cd laravel-next-app && docker compose exec laravel.test php artisan migrate:fresh
+	cd laravel-next-app && docker compose exec laravel.test php artisan db:seed
 
 test:
-	-docker compose exec php php artisan test
-	docker compose exec php php artisan dusk
+	@echo "テスト用データベースのマイグレーションを実行中..."
+	cd laravel-next-app && docker compose exec laravel.test php artisan migrate:fresh --seed --env=testing
+
+	@echo "Playwright テストを実行中..."
+	cd next-frontend-app && DB_DATABASE=testing_my_app npx playwright test
 
 init:
-	docker compose up -d --build
-	docker compose exec php composer install
+	cd laravel-next-app && docker compose up -d --build
+	cd laravel-next-app && docker compose exec laravel.test composer install
 	sleep 10
 	cp laravel-next-app/src/.env.example laravel-next-app/src/.env
-	docker compose exec php php artisan key:generate
-	docker compose exec php php artisan storage:link
-	docker compose exec php php artisan migrate:fresh
-	docker compose exec php php artisan db:seed
-	echo "CREATE DATABASE demo_test;"|docker compose exec -T mysql bash -c 'mysql -u root -proot'
-	cp src/.env.testing.example src/.env.testing
-	docker compose exec php php artisan key:generate --env=testing
-	cp src/.env.testing src/.env.dusk.local
-	sed -i 's/APP_URL=http:\/\/localhost/APP_URL=http:\/\/nginx/g' src/.env.dusk.local
-	cp next-frontend-app/src/.env.example next-frontend-app/src/.env.local
-	SECRET_KEY=$$(openssl rand -base64 32 | tr -d '\n'); \
-	sed -i '' "s|NEXTAUTH_SECRET=|NEXTAUTH_SECRET=$${SECRET_KEY}|g" next-frontend-app/src/.env.local 2>/dev/null || \
-	sed -i "s|NEXTAUTH_SECRET=|NEXTAUTH_SECRET=$${SECRET_KEY}|g" next-frontend-app/src/.env.local
+	cd laravel-next-app && docker compose exec laravel.test php artisan key:generate
+	cd laravel-next-app && docker compose exec laravel.test php artisan storage:link
+	cd laravel-next-app && docker compose exec laravel.test php artisan migrate:fresh
+	cd laravel-next-app && docker compose exec laravel.test php artisan db:seed

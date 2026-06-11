@@ -2,12 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use Faker\Factory;
+use App\Models\User;
 use Tests\TestCase;
 use Illuminate\Support\Facades\Hash;
 
-class Case01StaffLoginTest extends TestCase
+class Case02StaffLogoutTest extends TestCase
 {
     /**
      * A basic feature test example.
@@ -25,40 +25,24 @@ class Case01StaffLoginTest extends TestCase
             'name' => $this->name,
             'password' => $this->hashedPassword,
         ]);
-    }
-    public function test_バリデーションチェック(){
-        $response = $this->postJson('/api/login', [
-            'login_id' => (string) $this->fake->randomNumber(4),
-            'password' => $this->fake->password(),
-            'role'     => 'staff',
-        ]);
-        $response->assertStatus(422);
-        $response->assertJsonStructure([
-            'message',
-            'errors',
-        ]);
-    }
-    public function test_スタッフとしてログインができる(): void{
-        $response = $this->postJson('/api/login', [
+        $loginResponse = $this->postJson('/api/login', [
             'login_id' => $this->accountId,
             'password' => $this->password,
             'role'     => 'staff',
         ]);
-        $response->assertStatus(200);
-        $response->assertJsonStructure([
-            'user' => [
-                'id',
-                'account_id',
-                'role',
-                'name',
-            ],
-            'token',
-        ]);
-        $response->assertJsonFragment([
-            'account_id' => $this->accountId,
-            'role' => 'staff',
-        ]);
+        $this->token = $loginResponse->json('token');
+    }
+    public function test_ログアウト(): void
+    {
         $this->assertDatabaseHas('personal_access_tokens', [
+            'tokenable_id'   => $this->user->id,
+            'tokenable_type' => get_class($this->user),
+        ]);
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $this->token,
+        ])->postJson('/api/logout');
+        $response->assertStatus(200);
+        $this->assertDatabaseMissing('personal_access_tokens', [
             'tokenable_id'   => $this->user->id,
             'tokenable_type' => get_class($this->user),
         ]);
