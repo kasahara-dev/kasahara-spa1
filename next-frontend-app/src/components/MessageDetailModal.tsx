@@ -71,7 +71,7 @@ export default function MessageDetailModal({
             </button>
           </div>
 
-          <CardHeader className="bg-muted/30 pb-4">
+          <CardHeader className="bg-muted/30 pb-4 rounded-t-none">
             {isReceived && (
               <CardTitle className="text-xl font-bold tracking-tight">
                 {message.title}
