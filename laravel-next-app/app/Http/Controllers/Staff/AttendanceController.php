@@ -64,7 +64,6 @@ class AttendanceController extends Controller
     {
         $validated = $request->validated();
         $userId = $validated['user_id'];
-        $calendarId = $validated['calendar_id'];
         $editorId = auth()->id();
         $attendance = Attendance::find($attendanceId);
         if (!$attendance) {

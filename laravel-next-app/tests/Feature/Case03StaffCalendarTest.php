@@ -3,33 +3,30 @@
 namespace Tests\Feature;
 
 use Database\Seeders\CalendarSeeder;
+use Database\Seeders\UserSeeder;
+use Database\Seeders\EventSeeder;
+use Database\Seeders\AttendanceSeeder;
 use Tests\TestCase;
-use Illuminate\Support\Facades\Hash;
-use Faker\Factory;
 use App\Models\Calendar;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class Case03StaffCalendarTest extends TestCase
 {
+    use RefreshDatabase;
     protected function setUp():void{
         parent::setUp();
         $this->seed([
             CalendarSeeder::class,
+            UserSeeder::class,
+            EventSeeder::class,
+            AttendanceSeeder::class,
         ]);
-        $this->fake = Factory::create('ja_JP');
-        $this->accountId = (string) $this->fake->randomNumber(5);
-        $this->password = $this->fake->password();
-        $this->hashedPassword = Hash::make($this->password);
-        $this->name = $this->fake->name();
-        $this->user = User::create([
-            'account_id' => $this->accountId,
-            'role' => 'staff',
-            'name' => $this->name,
-            'password' => $this->hashedPassword,
-        ]);
+        $this->user = User::where('role', 'staff')->first();
+        $this->accountId = $this->user->account_id;
         $loginResponse = $this->postJson('/api/login', [
             'login_id' => $this->accountId,
-            'password' => $this->password,
+            'password' => 'password',
             'role'     => 'staff',
         ]);
         $this->token = $loginResponse->json('token');
@@ -51,5 +48,29 @@ class Case03StaffCalendarTest extends TestCase
         ]);
         $calendarData = $this->response->json('calendar_data');
         $this->assertCount(Calendar::count(), $calendarData);
+    }
+    public function test_欠席その他を全件取得できる()
+    {
+        $calendarData = $this->response->json('calendar_data');
+        foreach ($calendarData as $index => $jsonCalendar) {
+            $dbCalendar = Calendar::with('attendances')->find($jsonCalendar['id']);
+            $this->assertCount(
+                $dbCalendar->attendances->count(), 
+                $jsonCalendar['attendances'],
+                "Calendar ID: {$jsonCalendar['id']} の attendances 件数が一致しません。"
+            );
+        }
+    }
+    public function test_イベントを全件取得できる()
+    {
+        $calendarData = $this->response->json('calendar_data');
+        foreach ($calendarData as $index => $jsonCalendar) {
+            $dbCalendar = Calendar::with('events')->find($jsonCalendar['id']);
+            $this->assertCount(
+                $dbCalendar->events->count(), 
+                $jsonCalendar['events'],
+                "Calendar ID: {$jsonCalendar['id']} の events 件数が一致しません。"
+            );
+        }
     }
 }

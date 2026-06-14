@@ -23,12 +23,12 @@ class MessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-        'to_type'   => 'required|in:0,1',
-        'to'        => 'required|integer',
-        'title'     => 'required|string|max:50',
-        'detail'    => 'required|string|max:400',
-        'file_path' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
-    ];
+            'to_type'   => 'required|in:0,1',
+            'to'        => 'required|integer',
+            'title'     => 'required|string|max:50',
+            'detail'    => 'required|string|max:400',
+            'file_path' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ];
     }
     public function messages(): array
     {

@@ -55,9 +55,9 @@ class StaffMessageController extends Controller
         $validated = $request->validated();
         $filePath = null;
         if ($request->hasFile('file_path')) {
-        $path = $request->file('file_path')->store('messages', 'public');
-        $filePath = $path;
-    }
+            $path = $request->file('file_path')->store('messages', 'public');
+            $filePath = $path;
+        }
         $message = StaffMessage::create([
             'to_type' => $validated['to_type'],
             'to' => $validated['to'],

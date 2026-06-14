@@ -107,7 +107,7 @@ export default function AttendanceStatusSelector({
             onChange={(e) => handleTextChange(e.target.value)}
             disabled={disabled}
             className="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50/50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
-            placeholder="理由を詳しく入力してください"
+            placeholder="理由を200字以内で入力してください"
           />
         </div>
       )}

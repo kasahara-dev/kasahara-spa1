@@ -13,7 +13,7 @@ test:
 	cd laravel-next-app && docker compose exec laravel.test php artisan test
 
 init:
-	cd laravel-next-app && docker compose up -d --build
+	cd laravel-next-app && WWWUSER=$$(id -u) WWWGROUP=$$(id -g) docker compose up -d --build
 	cd laravel-next-app && docker compose exec laravel.test composer install
 	sleep 10
 	cp laravel-next-app/src/.env.example laravel-next-app/src/.env
@@ -33,7 +33,7 @@ init:
 
 up:
 	@echo "バックエンド (Laravel Sail) を起動中..."
-	cd laravel-next-app && docker compose up -d
+	cd laravel-next-app && WWWUSER=$$(id -u) WWWGROUP=$$(id -g) docker compose up -d
 	@echo "フロントエンド (Next.js) をバックグラウンドで起動中..."
 	cd next-frontend-app && npm run dev &
 	@echo "すべての準備が整いました。ブラウザで確認してください。"
