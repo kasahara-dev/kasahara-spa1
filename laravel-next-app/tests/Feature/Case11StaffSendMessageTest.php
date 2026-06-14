@@ -5,11 +5,9 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Database\Seeders\CalendarSeeder;
 use Database\Seeders\UserSeeder;
-use Database\Seeders\StaffMessageSeeder;
 use Database\Seeders\GroupSeeder;
 use Database\Seeders\GroupUserSeeder;
 use App\Models\User;
-use App\Models\Group;
 use App\Models\StaffMessage;
 use Tests\TestCase;
 use Faker\Factory;
@@ -20,7 +18,6 @@ use App\Mail\StaffMessageMail;
 class Case11StaffSendMessageTest extends TestCase
 {
     use RefreshDatabase;
-    
     protected function setUp():void{
         parent::setUp();
         $this->seed([
