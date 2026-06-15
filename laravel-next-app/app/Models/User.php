@@ -94,9 +94,11 @@ class User extends Authenticatable
         }else{
             $messages = 'staff';
         }
-    usort($messages, function ($a, $b) {
-        return $b['created_at'] <=> $a['created_at'];
-    });
+        if (is_array($messages) && count($messages) > 0) {
+            usort($messages, function ($a, $b) {
+                return $b['created_at'] <=> $a['created_at'];
+            });
+        }
         return $messages;
     }
     public function getGroupSummaryAttribute()

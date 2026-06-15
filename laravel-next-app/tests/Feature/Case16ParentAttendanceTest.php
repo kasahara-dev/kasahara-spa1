@@ -33,9 +33,6 @@ class Case16ParentAttendanceTest extends TestCase
             'role'     => 'parent',
         ]);
         $this->token = $loginResponse->json('token');
-        if ($loginResponse->status() !== 200) {
-            dump('ログイン失敗詳細:', $loginResponse->json());
-        }
         $this->response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
         ])->getJson('/api');
