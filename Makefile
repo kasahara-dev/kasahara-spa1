@@ -34,7 +34,7 @@ init:
 up:
 	@echo "バックエンド (Laravel Sail) を起動中..."
 	cd laravel-next-app && WWWUSER=$$(id -u) WWWGROUP=$$(id -g) docker compose up -d
-	@echo "フロントエンド (Next.js) をバックグラウンドで起動中..."
+	@echo "フロントエンド (Next.js) を起動中..."
 	cd next-frontend-app && npm run dev &
 	@echo "すべての準備が整いました。ブラウザで確認してください。"
 

@@ -152,7 +152,7 @@ export default function CalendarSection({
       }
       if (hasExistingAttendance) {
         requestUrl = `${baseUrl}/${attendanceId}`;
-        requestMethod = "PUT";
+        requestMethod = "PATCH";
       }
       requestBody = {
         calendar_id: calendarId,

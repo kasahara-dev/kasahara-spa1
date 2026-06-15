@@ -38,6 +38,7 @@ class Case11StaffSendMessageTest extends TestCase
     }
     public function test_タイトル本文バリデーション(): void
     {
+        Mail::fake();
         $toUserId = User::where('role', 'parent')->first()->id;
         $staffId = $this->staff->id;
         $title = $this->fake->text(rand(5,50));
@@ -57,6 +58,7 @@ class Case11StaffSendMessageTest extends TestCase
         $response->assertStatus(422);
         $staffMessageCount = StaffMessage::count();
         $this->assertEquals($staffMessageCount,0,'タイトルnullバリデーション通過しています');
+        Mail::assertNothingSent();
         // タイトル文字数オーバー
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
@@ -70,6 +72,7 @@ class Case11StaffSendMessageTest extends TestCase
         $response->assertStatus(422);
         $staffMessageCount = StaffMessage::count();
         $this->assertEquals($staffMessageCount,0,'タイトル文字数越えバリデーション通過しています');
+        Mail::assertNothingSent();
         // 本文null
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
@@ -83,6 +86,7 @@ class Case11StaffSendMessageTest extends TestCase
         $response->assertStatus(422);
         $staffMessageCount = StaffMessage::count();
         $this->assertEquals($staffMessageCount,0,'タイトルnullバリデーション通過しています');
+        Mail::assertNothingSent();
         // 本文文字数オーバー
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
@@ -96,9 +100,11 @@ class Case11StaffSendMessageTest extends TestCase
         $response->assertStatus(422);
         $staffMessageCount = StaffMessage::count();
         $this->assertEquals($staffMessageCount,0,'タイトル文字数越えバリデーション通過しています');
+        Mail::assertNothingSent();
     }
     public function test_添付ファイルバリデーション(): void
     {
+        Mail::fake();
         $toUserId = User::where('role', 'parent')->first()->id;
         $staffId = $this->staff->id;
         $title = $this->fake->text(rand(5,50));
@@ -129,6 +135,7 @@ class Case11StaffSendMessageTest extends TestCase
         $response->assertStatus(422);
         $staffMessageCount = StaffMessage::count();
         $this->assertEquals($staffMessageCount,0,'ファイルサイズバリデーション通過しています');
+        Mail::assertNothingSent();
     }
     public function test_全員にメッセージとメールを送信できる(){
         Mail::fake();

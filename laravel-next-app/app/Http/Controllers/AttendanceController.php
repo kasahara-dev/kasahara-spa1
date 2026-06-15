@@ -23,7 +23,7 @@ class AttendanceController extends Controller
             return true;
         }
         $deadlineTimeStr = config('app_settings.deadline_time');
-        $deadline = Carbon::createFromTimeString($deadlineTimeStr);
+        $deadline = Carbon::parse($today->format('Y-m-d') . ' ' . $deadlineTimeStr);
         if(Carbon::now()->isAfter($deadline)){
             return true;
         }
@@ -35,7 +35,7 @@ class AttendanceController extends Controller
         $userId = auth()->id();
         $calendarId = $validated['calendar_id'];
         if($this->isPastDeadline($calendarId)){
-            return response()->json(['message' => 'アプリでの登録可能時刻を過ぎています。直接園にお電話ください。']);
+            return response()->json(['message' => 'アプリでの登録可能時刻を過ぎています。直接園にお電話ください。'],422);
         }
         $attendance = Attendance::withTrashed()
             ->where('user_id', $userId)
@@ -71,6 +71,7 @@ class AttendanceController extends Controller
         }
         $attendance->status = (int)$validated['status'];
         $attendance->detail = ((int)$validated['status'] === 2) ? $validated['detail'] : null;
+        $attendance->editor_id = null;
         $attendance->save();
         return response()->json(['message' => '出欠予定を更新しました', 'data' => $attendance]);
     }
@@ -85,6 +86,8 @@ class AttendanceController extends Controller
         if($this->isPastDeadline($attendance->calendar_id)){
             return response()->json(['message' => 'アプリでの登録可能時刻を過ぎています。直接園にお電話ください。'],422);
         }
+        $attendance->editor_id = null;
+        $attendance->save();
         $attendance->delete();
         return response()->json(['message' => '出席に変更しました']);
     }

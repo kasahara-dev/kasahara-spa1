@@ -4,11 +4,13 @@ namespace Tests\Feature;
 
 use Faker\Factory;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use Illuminate\Support\Facades\Hash;
 
 class Case14ParentLogoutTest extends TestCase
 {
+    use RefreshDatabase;
     /**
      * A basic feature test example.
      */

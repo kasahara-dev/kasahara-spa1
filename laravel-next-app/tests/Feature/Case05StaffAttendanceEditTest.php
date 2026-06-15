@@ -48,7 +48,7 @@ class Case05StaffAttendanceEditTest extends TestCase
             $status = 1;
             $detail = null;
         }else{
-            $rand = rand(1, 200);
+            $rand = rand(5, 200);
             $status = 2;
             $detail = $this->fake->text($rand);
         }

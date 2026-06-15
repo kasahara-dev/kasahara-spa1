@@ -14,7 +14,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 class Case15ParentCalendarTest extends TestCase
 {
     use RefreshDatabase;
-    protected function setUp():void{
+    protected function setUp(): void
+    {
         parent::setUp();
         $this->seed([
             CalendarSeeder::class,
@@ -22,7 +23,10 @@ class Case15ParentCalendarTest extends TestCase
             EventSeeder::class,
             AttendanceSeeder::class,
         ]);
-        $this->user = User::where('role', 'parent')->first();
+        $this->user = User::factory()->create([
+            'role' => 'parent',
+            'password' => bcrypt('password'),
+        ]);
         $this->accountId = $this->user->account_id;
         $loginResponse = $this->postJson('/api/login', [
             'login_id' => $this->accountId,
@@ -30,6 +34,9 @@ class Case15ParentCalendarTest extends TestCase
             'role'     => 'parent',
         ]);
         $this->token = $loginResponse->json('token');
+        if ($loginResponse->status() !== 200) {
+            dump('ログイン失敗詳細:', $loginResponse->json());
+        }
         $this->response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
         ])->getJson('/api');

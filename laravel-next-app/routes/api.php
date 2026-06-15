@@ -39,7 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/profile',  [ProfileController::class ,'index']);
         Route::patch('/profile',  [ProfileController::class,  'update']);
         Route::post('/attendance',  [AttendanceController::class , 'store']);
-        Route::put('/attendance/{attendance_id}',[AttendanceController::class,'update']);
+        Route::patch('/attendance/{attendance_id}',[AttendanceController::class,'update']);
         Route::delete('/attendance/{attendance_id}',[AttendanceController::class,'destroy']);
     });
 });
