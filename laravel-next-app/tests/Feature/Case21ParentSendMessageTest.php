@@ -11,7 +11,7 @@ use App\Models\User;
 use App\Models\StaffMessage;
 use Tests\TestCase;
 
-class Case20ParentReceivedMessageTest extends TestCase
+class Case21ParentSendMessageTest extends TestCase
 {
     use RefreshDatabase;
     
@@ -29,10 +29,6 @@ class Case20ParentReceivedMessageTest extends TestCase
         $this->seed([
             GroupUserSeeder::class,
         ]);
-        StaffMessage::factory()->create([
-            'to_type' => 0,
-            'to' => $this->parent->id,
-        ]);
         $this->accountId = $this->parent->account_id;
         $this->parentId = $this->parent->id;
         $this->parentAccountId = $this->parent->account_id;
@@ -43,26 +39,32 @@ class Case20ParentReceivedMessageTest extends TestCase
         ]);
         $this->token = $loginResponse->json('token');
     }
-    public function test_添付ファイルをダウンロードできる(): void
+    public function test_バリデーション(): void
     {
-        $targetDir = storage_path('app/public/messages');
-        if (!file_exists($targetDir)) {
-            mkdir($targetDir, 0755, true);
-        }
-        $dummyFileName = 'test.pdf';
-        $absolutePath = $targetDir . '/' . $dummyFileName;
-        file_put_contents($absolutePath, 'dummy pdf content');
-        $filePath = 'messages/' . $dummyFileName;
-        $message = StaffMessage::first();
-        $message->update(['to_type'=>0,'to'=>$this->parentId,'file_path' => $filePath]);
-        $messageId = $message->id;
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
-        ])->getJson('/api/messages/' . $messageId . '/download');
-        $response->assertStatus(200);
-        $response->assertDownload($dummyFileName);
-        if (file_exists($absolutePath)) {
-            unlink($absolutePath);
-        }
+        ])->postJson('/api/messages/',[
+            'detail' => null,
+        ]);
+        $response->assertStatus(422);
+        $detail = str_repeat('a', 401);
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $this->token,
+        ])->postJson('/api/messages/',[
+            'detail' => $detail,
+        ]);
+        $response->assertStatus(422);
+        $this->assertDatabaseCount('parent_messages',0);
+    }
+    public function test_送信できる(): void
+    {
+        $detail = str_repeat('a', rand(1,400));
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $this->token,
+        ])->postJson('/api/messages/',[
+            'detail' => $detail,
+        ]);
+        $response->assertStatus(201);
+        $this->assertDatabaseHas('parent_messages', ['from' => $this->parentId, 'detail' => $detail,]);
     }
 }

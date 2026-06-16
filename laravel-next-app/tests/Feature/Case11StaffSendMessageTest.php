@@ -57,7 +57,7 @@ class Case11StaffSendMessageTest extends TestCase
         ]);
         $response->assertStatus(422);
         $staffMessageCount = StaffMessage::count();
-        $this->assertEquals($staffMessageCount,0,'タイトルnullバリデーション通過しています');
+        $this->assertEquals($staffMessageCount,0);
         Mail::assertNothingSent();
         // タイトル文字数オーバー
         $response = $this->withHeaders([
@@ -71,7 +71,7 @@ class Case11StaffSendMessageTest extends TestCase
         ]);
         $response->assertStatus(422);
         $staffMessageCount = StaffMessage::count();
-        $this->assertEquals($staffMessageCount,0,'タイトル文字数越えバリデーション通過しています');
+        $this->assertEquals($staffMessageCount,0);
         Mail::assertNothingSent();
         // 本文null
         $response = $this->withHeaders([
@@ -85,7 +85,7 @@ class Case11StaffSendMessageTest extends TestCase
         ]);
         $response->assertStatus(422);
         $staffMessageCount = StaffMessage::count();
-        $this->assertEquals($staffMessageCount,0,'タイトルnullバリデーション通過しています');
+        $this->assertEquals($staffMessageCount,0);
         Mail::assertNothingSent();
         // 本文文字数オーバー
         $response = $this->withHeaders([
@@ -99,7 +99,7 @@ class Case11StaffSendMessageTest extends TestCase
         ]);
         $response->assertStatus(422);
         $staffMessageCount = StaffMessage::count();
-        $this->assertEquals($staffMessageCount,0,'タイトル文字数越えバリデーション通過しています');
+        $this->assertEquals($staffMessageCount,0);
         Mail::assertNothingSent();
     }
     public function test_添付ファイルバリデーション(): void
@@ -121,7 +121,7 @@ class Case11StaffSendMessageTest extends TestCase
         ]);
         $response->assertStatus(422);
         $staffMessageCount = StaffMessage::count();
-        $this->assertEquals($staffMessageCount,0,'ファイル拡張子バリデーション通過しています');
+        $this->assertEquals($staffMessageCount,0);
         $largeFile = UploadedFile::fake()->create('huge_file.pdf', 5121, 'application/pdf');
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
@@ -134,7 +134,7 @@ class Case11StaffSendMessageTest extends TestCase
         ]);
         $response->assertStatus(422);
         $staffMessageCount = StaffMessage::count();
-        $this->assertEquals($staffMessageCount,0,'ファイルサイズバリデーション通過しています');
+        $this->assertEquals($staffMessageCount,0);
         Mail::assertNothingSent();
     }
     public function test_全員にメッセージとメールを送信できる(){

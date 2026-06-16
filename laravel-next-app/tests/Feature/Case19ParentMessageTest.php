@@ -69,8 +69,7 @@ class Case19ParentMessageTest extends TestCase
             $firstCreatedAt = \Illuminate\Support\Carbon::parse($data[0]['created_at']);
             $secondCreatedAt = \Illuminate\Support\Carbon::parse($data[1]['created_at']);
             $this->assertTrue(
-                $firstCreatedAt->isAfter($secondCreatedAt) || $firstCreatedAt->equalTo($secondCreatedAt),
-                'メッセージが最新順に並んでいません。'
+                $firstCreatedAt->isAfter($secondCreatedAt) || $firstCreatedAt->equalTo($secondCreatedAt)
             );
         }
     }

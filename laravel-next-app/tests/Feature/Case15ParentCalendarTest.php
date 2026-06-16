@@ -34,9 +34,6 @@ class Case15ParentCalendarTest extends TestCase
             'role'     => 'parent',
         ]);
         $this->token = $loginResponse->json('token');
-        if ($loginResponse->status() !== 200) {
-            dump('ログイン失敗詳細:', $loginResponse->json());
-        }
         $this->response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
         ])->getJson('/api');
@@ -61,8 +58,7 @@ class Case15ParentCalendarTest extends TestCase
             $dbCalendar = Calendar::with('events')->find($jsonCalendar['id']);
             $this->assertCount(
                 $dbCalendar->events->count(), 
-                $jsonCalendar['events'],
-                "Calendar ID: {$jsonCalendar['id']} の events 件数が一致しません。"
+                $jsonCalendar['events']
             );
         }
     }
@@ -78,8 +74,7 @@ class Case15ParentCalendarTest extends TestCase
                 ->count();
             $this->assertEquals(
                 $dbCalendar->attendances->count(), 
-                $jsonAttendancesCount,
-                "Calendar ID: {$jsonCalendar['id']} の欠席件数が一致しません。"
+                $jsonAttendancesCount
             );
         }
     }
@@ -95,8 +90,7 @@ class Case15ParentCalendarTest extends TestCase
                 ->count();
             $this->assertEquals(
                 $dbCalendar->attendances->count(), 
-                $jsonAttendancesCount,
-                "Calendar ID: {$jsonCalendar['id']} の遅刻その他件数が一致しません。"
+                $jsonAttendancesCount
             );
         }
     }

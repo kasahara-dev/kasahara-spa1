@@ -56,8 +56,7 @@ class Case03StaffCalendarTest extends TestCase
             $dbCalendar = Calendar::with('attendances')->find($jsonCalendar['id']);
             $this->assertCount(
                 $dbCalendar->attendances->count(), 
-                $jsonCalendar['attendances'],
-                "Calendar ID: {$jsonCalendar['id']} の attendances 件数が一致しません。"
+                $jsonCalendar['attendances']
             );
         }
     }
@@ -68,8 +67,7 @@ class Case03StaffCalendarTest extends TestCase
             $dbCalendar = Calendar::with('events')->find($jsonCalendar['id']);
             $this->assertCount(
                 $dbCalendar->events->count(), 
-                $jsonCalendar['events'],
-                "Calendar ID: {$jsonCalendar['id']} の events 件数が一致しません。"
+                $jsonCalendar['events']
             );
         }
     }
