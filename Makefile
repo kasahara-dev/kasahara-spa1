@@ -7,7 +7,7 @@ test:
 	cd laravel-next-app && docker compose exec laravel.test php artisan migrate:fresh --seed --env=testing
 
 	@echo "Playwright テストを実行中..."
-	-cd next-frontend-app && CI=true DB_DATABASE=testing_my_app npx playwright test
+	-cd next-frontend-app && CI=true DB_DATABASE=testing_my_app npx playwright test --workers=1
 
 	@echo "PHPUnit テストを実行中..."
 	cd laravel-next-app && docker compose exec laravel.test php artisan test

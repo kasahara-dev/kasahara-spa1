@@ -237,7 +237,7 @@ export default function CalendarSection({
     : undefined;
 
   return (
-    <>
+    <div className="">
       <Calendar
         mode="single"
         selected={date}
@@ -248,7 +248,7 @@ export default function CalendarSection({
         startMonth={minDate}
         endMonth={maxDate}
         disabled={[{ before: minDate, after: maxDate }, ...closedDays]}
-        className="w-full [&_th:nth-child(1)]:text-red-400/80 [&_th:nth-child(7)]:text-blue-400/80"
+        className="w-full overflow-hidden [&_table]:w-full [&_table]:table-fixed [&_table]:border-collapse"
         modifiers={{
           closed: closedDays,
           hasEvent: data.calendar_data
@@ -264,8 +264,8 @@ export default function CalendarSection({
         modifiersClassNames={{
           closed: "text-red-500 font-bold",
           absent:
-            "relative isolate z-10 before:content-['×'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-[28px] before:text-red-500 before:pointer-events-none before:font-bold",
-          late: "relative isolate z-10 before:content-['△'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-[28px] before:text-red-500 before:pointer-events-none before:font-bold",
+            "relative before:content-['×'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-[28px] before:text-red-500 before:pointer-events-none before:font-bold",
+          late: "relative before:content-['△'] before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-[28px] before:text-red-500 before:pointer-events-none before:font-bold",
           hasEvent:
             "relative after:content-[''] after:absolute after:bottom-1 md:after:bottom-3 after:left-1/2 after:-translate-x-1/2 after:w-2 after:h-2 after:bg-primary after:rounded-full aria-selected:after:bg-primary-foreground",
         }}
@@ -295,6 +295,6 @@ export default function CalendarSection({
             document.body,
           )
         : null}
-    </>
+    </div>
   );
 }

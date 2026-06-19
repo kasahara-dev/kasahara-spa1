@@ -4,13 +4,14 @@
 
 > [!IMPORTANT]
 > 保護者とスタッフの連絡アプリです。
-> カレンダー登録機能、ユーザー登録機能、パスワード変更機能、メッセージ未既読判別機能はありません。別システムで行う想定です。
+> カレンダー登録機能、ユーザー登録機能、パスワード変更機能、メッセージ未既読判別機能はありません。別システムで補う想定です。
 
 ## 環境構築
 
 1.  `git clone git@github.com:kasahara-dev/kasahara-spa1.git`
 2.  `cd kasahara-spa1`
 3.  `make init`
+4.  `make up`
 
 > [!IMPORTANT]
 > MySQL は、OS によって起動しない場合があるのでそれぞれの PC に合わせて compose.yaml ファイルを編集してください
@@ -25,7 +26,7 @@
 `make test`
 
 > [!NOTE]
-> PHPUnit→dusk の順に実行されます
+> Playwright→PHPUnit の順に実行されます
 
 ## 使用技術
 

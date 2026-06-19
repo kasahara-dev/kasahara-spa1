@@ -84,19 +84,21 @@ export default function Home() {
         inert={isAnyModalOpen ? true : undefined}
         className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start"
       >
-        <div className="flex flex-col space-y-6">
+        <div className="space-y-6">
           {/* 日付選択セクション */}
-          <div className="bg-white p-5 rounded-xl shadow-sm border">
+          <div className="flex flex-col bg-white p-5 rounded-xl shadow-sm border [&_table]:w-full">
             <h2 className="text-primary font-bold px-2">日付選択</h2>
             {loading || !staffData ? (
               <Loading />
             ) : (
-              <CalendarSection
-                apiUrl="/api/proxy/staff"
-                staffData={staffData}
-                selectedDate={date}
-                onDateSelect={setDate}
-              />
+              <div className="w-full">
+                <CalendarSection
+                  apiUrl="/api/proxy/staff"
+                  staffData={staffData}
+                  selectedDate={date}
+                  onDateSelect={setDate}
+                />
+              </div>
             )}
           </div>
 

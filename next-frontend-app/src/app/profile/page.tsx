@@ -140,7 +140,7 @@ export default function ProfileContactsForm() {
             disabled={submittingField !== null}
             className={`h-10 px-4 text-sm font-medium transition-colors min-w-[70px]`}
           >
-            {isSubmitting ? "中..." : isSuccess ? "✓ 完了" : "更新"}
+            {isSubmitting ? "更新中..." : isSuccess ? "✓ 完了" : "更新"}
           </Button>
         </div>
         {errors[fieldKey] && (
