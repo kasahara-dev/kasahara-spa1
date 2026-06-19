@@ -13,23 +13,41 @@ test:
 	cd laravel-next-app && docker compose exec laravel.test php artisan test
 
 init:
-	cd laravel-next-app && WWWUSER=$$(id -u) WWWGROUP=$$(id -g) docker compose up -d --build
-	cd laravel-next-app && docker compose exec laravel.test composer install
+	@echo "--- 初期設定ファイルを作成中 ---"
+	@if [ ! -f laravel-next-app/src/.env ]; then \
+		cp laravel-next-app/.env.example laravel-next-app/.env; \
+	fi
+	@if [ ! -f next-frontend-app/src/.env.local ]; then \
+		cp next-frontend-app/.env.example next-frontend-app/.env.local; \
+		SECRET_KEY=$$(openssl rand -base64 32); \
+		sed -i "s|NEXTAUTH_SECRET=|NEXTAUTH_SECRET=$$SECRET_KEY|g" next-frontend-app/src/.env.local; \
+	fi
+
+	@echo "--- Docker コンテナをビルド中 ---"
+	# 初回はビルドが必要なため、upの前にbuildを明示的に実行
+	cd laravel-next-app && WWWUSER=$$(id -u) WWWGROUP=$$(id -g) docker compose build
+	cd laravel-next-app && WWWUSER=$$(id -u) WWWGROUP=$$(id -g) docker compose up -d
+
+	@echo "--- コンテナ内の初期セットアップを実行中 ---"
+	# コンテナが起動するまで少し待機
 	sleep 10
-	cp laravel-next-app/src/.env.example laravel-next-app/src/.env
-	cd laravel-next-app && docker compose exec laravel.test php artisan key:generate
-	cd laravel-next-app && docker compose exec laravel.test php artisan storage:link
-	cd laravel-next-app && docker compose exec laravel.test php artisan migrate:fresh
-	cd laravel-next-app && docker compose exec laravel.test php artisan db:seed
-	cd laravel-next-app && echo "CREATE DATABASE IF NOT EXISTS demo_test;" | docker compose exec -T mysql bash -c 'mysql -u sail -ppassword'
-	cp laravel-next-app/src/.env.testing.example laravel-next-app/src/.env.testing
-	cd laravel-next-app && docker compose exec laravel.test php artisan key:generate --env=testing
-	cp laravel-next-app/src/.env.testing laravel-next-app/src/.env.dusk.local
-	sed -i 's/APP_URL=http:\/\/localhost/APP_URL=http:\/\/nginx/g' laravel-next-app/src/.env.dusk.local
-	cp next-frontend-app/src/.env.example next-frontend-app/src/.env.local
-	SECRET_KEY=$$(openssl rand -base64 32 | tr -d '\n'); \
-	sed -i '' "s|NEXTAUTH_SECRET=|NEXTAUTH_SECRET=$${SECRET_KEY}|g" next-frontend-app/src/.env.local 2>/dev/null || \
-	sed -i "s|NEXTAUTH_SECRET=|NEXTAUTH_SECRET=$${SECRET_KEY}|g" next-frontend-app/src/.env.local
+	cd laravel-next-app && docker compose exec -T laravel.test composer install
+	cd laravel-next-app && docker compose exec -T laravel.test php artisan key:generate
+	cd laravel-next-app && docker compose exec -T laravel.test php artisan storage:link
+	cd laravel-next-app && docker compose exec -T laravel.test php artisan migrate:fresh --seed
+	
+	@echo "--- テスト用DBを作成中 ---"
+	cd laravel-next-app && docker compose exec -T mysql bash -c 'mysql -u sail -ppassword -e "CREATE DATABASE IF NOT EXISTS testing_my_app;"'
+
+	@echo "--- テスト環境の準備 ---"
+	cp laravel-next-app/.env.example laravel-next-app/.env.testing
+	# 必要に応じて.env.testingをsedでDB設定など修正
+	cd laravel-next-app && docker compose exec -T laravel.test php artisan key:generate --env=testing
+	
+	@echo "--- フロントエンドのインストール ---"
+	cd next-frontend-app && npm install
+
+	@echo "--- すべてのセットアップが完了しました！ ---"
 
 up:
 	@echo "バックエンド (Laravel Sail) を起動中..."

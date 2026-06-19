@@ -50,7 +50,6 @@ class StaffMessageMail extends Mailable
      */
     public function attachments(): array
     {
-        // ファイルが添付されている場合のみ、メールにくっつける
         if ($this->staffMessage->file_path) {
             return [
                 Attachment::fromStorageDisk('public', $this->staffMessage->file_path)
