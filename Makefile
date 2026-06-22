@@ -14,13 +14,13 @@ test:
 
 init:
 	@echo "--- 初期設定ファイルを作成中 ---"
-	@if [ ! -f laravel-next-app/src/.env ]; then \
+	@if [ ! -f laravel-next-app/.env ]; then \
 		cp laravel-next-app/.env.example laravel-next-app/.env; \
 	fi
-	@if [ ! -f next-frontend-app/src/.env.local ]; then \
+	@if [ ! -f next-frontend-app/.env.local ]; then \
 		cp next-frontend-app/.env.example next-frontend-app/.env.local; \
 		SECRET_KEY=$$(openssl rand -base64 32); \
-		sed -i "s|NEXTAUTH_SECRET=|NEXTAUTH_SECRET=$$SECRET_KEY|g" next-frontend-app/src/.env.local; \
+		sed -i "s|NEXTAUTH_SECRET=|NEXTAUTH_SECRET=$$SECRET_KEY|g" next-frontend-app/.env.local; \
 	fi
 
 	@echo "--- Docker コンテナをビルド中 ---"
