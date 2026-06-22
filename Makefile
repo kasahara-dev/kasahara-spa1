@@ -43,6 +43,7 @@ init:
 	cd laravel-next-app && docker compose exec -T laravel.test php artisan key:generate --env=testing
 
 	@echo "--- フロントエンドのインストール ---"
+	rm -rf next-frontend-app/.next
 	cd next-frontend-app && npm install
 
 	@echo "--- すべてのセットアップが完了しました！ ---"
