@@ -45,7 +45,7 @@ init:
 	@echo "--- フロントエンドのインストール ---"
 	rm -rf next-frontend-app/.next
 	cd next-frontend-app && npm install
-
+	cd next-frontend-app && npm run build
 	@echo "--- すべてのセットアップが完了しました！ ---"
 
 up:
