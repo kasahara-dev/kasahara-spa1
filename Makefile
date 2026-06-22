@@ -18,7 +18,7 @@ init:
 		cp laravel-next-app/.env.example laravel-next-app/.env; \
 	fi
 	@if [ ! -f next-frontend-app/.env.local ]; then \
-		cp next-frontend-app/.env.example next-frontend-app/.env.local; \
+		cp next-frontend-app/.env.local.example next-frontend-app/.env.local; \
 		SECRET_KEY=$$(openssl rand -base64 32); \
 		sed -i "s|NEXTAUTH_SECRET=|NEXTAUTH_SECRET=$$SECRET_KEY|g" next-frontend-app/.env.local; \
 	fi
