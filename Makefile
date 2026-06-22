@@ -25,7 +25,6 @@ init:
 
 	@echo "--- Docker コンテナをビルド中 ---"
 	# 初回はビルドが必要なため、upの前にbuildを明示的に実行
-	cd laravel-next-app && WWWUSER=$$(id -u) WWWGROUP=$$(id -g) docker compose build
 	cd laravel-next-app && WWWUSER=$$(id -u) WWWGROUP=$$(id -g) docker compose up -d
 
 	@echo "--- コンテナ内の初期セットアップを実行中 ---"
