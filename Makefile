@@ -35,15 +35,14 @@ init:
 	cd laravel-next-app && docker compose exec -T laravel.test php artisan key:generate
 	cd laravel-next-app && docker compose exec -T laravel.test php artisan storage:link
 	cd laravel-next-app && docker compose exec -T laravel.test php artisan migrate:fresh --seed
-	
+
 	@echo "--- テスト用DBを作成中 ---"
 	cd laravel-next-app && docker compose exec -T mysql bash -c 'mysql -u sail -ppassword -e "CREATE DATABASE IF NOT EXISTS testing_my_app;"'
 
 	@echo "--- テスト環境の準備 ---"
-	cp laravel-next-app/.env.example laravel-next-app/.env.testing
-	# 必要に応じて.env.testingをsedでDB設定など修正
+	cp laravel-next-app/.env.testing.example laravel-next-app/.env.testing
 	cd laravel-next-app && docker compose exec -T laravel.test php artisan key:generate --env=testing
-	
+
 	@echo "--- フロントエンドのインストール ---"
 	cd next-frontend-app && npm install
 
