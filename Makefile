@@ -27,7 +27,7 @@ init:
 	cd laravel-next-app && WWWUSER=$$(id -u) WWWGROUP=$$(id -g) docker compose up -d
 
 	@echo "--- コンテナ内の初期セットアップを実行中 ---"
-	# コンテナが起動するまで少し待機
+	# コンテナが起動するまで待機
 	sleep 10
 	cd laravel-next-app && docker compose exec -T laravel.test composer install
 	cd laravel-next-app && docker compose exec -T laravel.test php artisan key:generate
@@ -44,13 +44,13 @@ init:
 	@echo "--- フロントエンドのインストール ---"
 	cd next-frontend-app && npm install
 	cd next-frontend-app && npm run build
+	sleep 10
 	@echo "--- すべてのセットアップが完了しました。プロセスを停止させます。 ---"
 	$(MAKE) down
 
 up:
 	@echo "バックエンド (Laravel Sail) を起動中..."
 	cd laravel-next-app && WWWUSER=$$(id -u) WWWGROUP=$$(id -g) docker compose up -d
-	sleep 20
 	@echo "フロントエンド (Next.js) を起動中..."
 	cd next-frontend-app && npm run dev &
 	@echo "すべての準備が整いました。"
