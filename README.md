@@ -23,8 +23,9 @@
 
 ## テスト手順
 
-別コンソールで実行
-`make test`
+1. 別コンソールを立ち上げる
+2. `cd kasahara-spa1`
+3. `make test`
 
 > [!NOTE]
 > Playwright→PHPUnit の順に実行されます
